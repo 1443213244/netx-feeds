@@ -1,0 +1,103 @@
+<%
+function get_congestion()
+	local congestion = 'bbr'
+	local reslute = luci.sys.call("[ `cat /proc/sys/net/ipv4/tcp_congestion_control 2>/dev/null` = bbr ] 2>/dev/null") == 0
+	if(reslute == false) then
+		congestion = 'cubic'
+	end
+	return congestion
+end
+
+function default_sel(value, value1)
+	local sel=nil;
+	if ( value == value1 ) then
+		sel = "selected=true"
+	end 
+	return sel
+end
+
+local congestion = get_congestion()
+-%>
+
+
+<%+header%>
+<script type="text/javascript">
+	function quitx() {
+		//	document.location="/systeminfo.asp";
+		document.location = "<%=controller%>/admin/services/congestion";
+
+	}
+
+	function showbox() {
+		var status = document.getElementById("statserver").style.display = 'block';
+		console.log(status);
+
+	}
+</script>
+<script type="text/javascript" src="/luci-static/resources/cbi.js"></script>
+<h2 name="content"><%:Netx service%></h2>
+<br />
+<div class="alert-message notice" id="statserver" style="display:none;">
+	<img src="/luci-static/resources/icons/loading.gif" alt="加载中" style="vertical-align:middle">
+	<span>账号登陆中，请稍后…</span>
+</div>
+<form method="post" name="login" action="<%=REQUEST_URI%>" enctype="multipart/form-data">
+		<div class="cbi-section">
+			<div class="table">
+				<div class="tr">
+					<div class="td left">
+						<%=html%>
+					</div>
+					<div class="td left">
+						<%=level%>
+					</div>
+				</div>
+				<div class="tr">
+					<div class="td left">
+						<%:Account status%>
+					</div>
+					<div class="td left">
+						<%- if congestion == 'bbr' then -%><%:Advanced%><%- else -%><%:General%><%- end -%> 
+					</div>
+				</div>
+				<div class="tr">
+					<div class="td left">
+						<%:End Date%>
+					</div>
+					<div class="td left">
+						<%=enddata%>
+					</div>
+				</div>
+			</div>
+		</div>
+	</fieldset>
+	<hr />
+
+	<fieldset class="cbi-section" id="cbi-system-system">
+	
+			<div class="cbi-value" id="cbi-jiasu-line"><label class="cbi-value-title"
+					for="cbid.jiasu.line"><%:Acceleration line%></label>
+				<div class="cbi-value-field">
+					<select class="cbi-input-select" onchange="cbi_d_update(this.id)" id="cbid.jiasu.line"
+						name="cbid.jiasu.line" size="1">
+						<option value="bbr"
+							<%=default_sel("bbr", congestion)%>><%:Advanced%>
+						</option>
+						<option value="cubic"
+							<%=default_sel("cubic", congestion)%>><%:General%>
+						</option>
+					</select>
+				</div>
+			</div>
+
+		</div>
+	
+		</div>
+	</fieldset>
+	<div class="cbi-page-actions">
+		<input class="cbi-button cbi-button-apply" type="submit" onClick="showbox()" value="<%:Save & Apply%>" />
+		<input class="cbi-button cbi-button-reset" type="reset" onClick=quitx() value="<%:Reset%>" />
+	</div>
+	<script type="text/javascript">cbi_d_update();</script>
+	</from>
+	<%+footer%>

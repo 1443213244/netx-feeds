@@ -1,0 +1,97 @@
+<%
+
+function get_acceleration()
+ local status
+ if(luci.sys.call("[ `pidof redsocks 2>/dev/null` > 0 ] 2>/dev/null") == 0) then
+  status = "Running"
+ else
+	status = "Stop"
+ end
+ return status
+end
+
+function default_sel(value, value1)
+	local sel=nil;
+	if ( value == value1 ) then
+		sel = "selected=true"
+	end 
+	return sel
+end
+
+local redsocks_status = get_acceleration()
+
+-%>
+<%+header%>
+<script type="text/javascript">
+	function quitx() {
+		//	document.location="/systeminfo.asp";
+		document.location = "<%=controller%>/admin/services/acceleration";
+
+	}
+
+	function showbox() {
+		var status = document.getElementById("statserver").style.display = 'block';
+		console.log(status);
+
+	}
+</script>
+<script type="text/javascript" src="/luci-static/resources/cbi.js"></script>
+<h2 name="content"><%:Local acceleration%></h2>
+<br />
+<div class="alert-message notice" id="statserver" style="display:none;">
+	<img src="/luci-static/resources/icons/loading.gif" alt="加载中" style="vertical-align:middle">
+	<span>启动中，请稍后…</span>
+</div>
+<form method="post" name="login" action="<%=REQUEST_URI%>" enctype="multipart/form-data">
+	<fieldset class="cbi-section" id="cbi-user-login">
+		<div class="cbi-section-info">
+			<div class="table">
+				<div class="tr">
+					<div class="td left">
+						<%:Running status%>
+					</div>
+					<div class="td left">
+						<%- if redsocks_status == 'Running' then -%><%:Running%><%- else -%><%:Stop%><%- end -%> 
+					</div>
+				</div>
+				<div class="tr">
+					<div class="td left">
+						<%:End Date%>
+					</div>
+					<div class="td left">
+						<%=enddata%>
+					</div>
+				</div>
+			</div>
+		</div>
+	</fieldset>
+	<hr />
+	<fieldset class="cbi-section" id="cbi-system-system">
+	
+		<div class="cbi-value" id="cbi-acceleration-enable"><label class="cbi-value-title"
+				for="cbid.acceleration.enable"><%:Acceleration line%></label>
+			<div class="cbi-value-field">
+				<select class="cbi-input-select" onchange="cbi_d_update(this.id)" id="cbid.acceleration.enable"
+					name="cbid.acceleration.enable" size="1">
+					<option value="0"
+						<%=default_sel("Stop", redsocks_status)%>><%:disable%>
+					</option>
+					<option value="1"
+						<%=default_sel("Running", redsocks_status)%>><%:Enable%>
+					</option>
+				</select>
+			</div>
+		</div>
+
+	</div>
+
+	</div>
+</fieldset>
+	
+	<div class="cbi-page-actions">
+		<input class="cbi-button cbi-button-apply" type="submit" onClick="showbox()" value="<%:Save & Apply%>" />
+		<input class="cbi-button cbi-button-reset" type="reset" onClick=quitx() value="<%:Reset%>" />
+	</div>
+	<script type="text/javascript">cbi_d_update();</script>
+	</from>
+	<%+footer%>

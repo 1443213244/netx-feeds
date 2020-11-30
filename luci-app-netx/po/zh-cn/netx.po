@@ -48,6 +48,40 @@ msgstr "启动服务"
 msgid "Stop Service"
 msgstr "停止服务"
 
+msgid "acceleration"
+msgstr "加速"
+
+msgid "congestion"
+msgstr "加速模式"
+
+msgid "congestion"
+msgstr "加速模式"
+
+msgid "Local acceleration"
+msgstr "本地加速"
+
+msgid "Running status"
+msgstr "运行状态"
+
+msgid "Running"
+msgstr "运行中"
+
+msgid "Stop"
+msgstr "停止"
+
+msgid "General"
+msgstr "一般"
+
+msgid "Advanced"
+msgstr "高级"
+
+
+
+
+
+
+
+
 
 
 
