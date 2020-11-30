@@ -1,0 +1,104 @@
+<%+header%>
+<%
+local uci = luci.model.uci.cursor()
+
+function default_sel(value, value1)
+			local sel=nil;
+			if ( value == value1 ) then
+				sel = "\"selected\""
+			end 
+			return sel
+		end
+
+function default_sel1(value, value1)
+			local sel=nil;
+			if ( value == value1 ) then
+				sel = "selected="
+			end 
+			return sel
+		end
+
+
+local function get_udp_status(name)
+	local ps = luci.sys.exec("ps | grep -e %s | grep -v grep 2>/dev/null" %{name})
+	local status = ""
+	if ps ~= "" then
+		status = "Running"
+	else
+		status = "Stoped"
+	end
+	return status
+end
+local uci = luci.model.uci.cursor()
+local mode = uci:get('wireguard', 'wg0', 'mode')
+local fec = uci:get('wireguard', 'wg0', 'fec')
+local enable = uci:get('wireguard', 'wg0', 'enable')
+local udp2raw_status = get_udp_status("udp2raw")
+local udpspeeder_status = get_udp_status("udpspeeder")
+-%>
+
+<fieldset class="cbi-section">
+	<legend><%:Running Status%></legend>
+	<table width="100%" cellspacing="10" id="_udp2raw_status_table">
+		<tr>
+			<td width="33%"><%:Name%></td>
+			<td width="33%"><%:Running Status%></td>
+		</tr>
+		<tr>
+			<td width="33%"><%:wireguard%></td>
+			<td><%=pcdata(udpspeeder_status)%></td>
+		</tr>
+	</table>
+</fieldset>
+
+<form method="post" name="wireguard" action="/cgi-bin/luci/admin/services/wireguard/restart" enctype="multipart/form-data">
+<fieldset class="cbi-section">
+	<legend><%:Manage%></legend>
+	<div class="cbi-section-user" style="float: left; width:60%">
+		<div class="cbi-value" id="cbi-wireguard-model"><label class="cbi-value-title"
+				for="cbid.wireguard.model"><%:mode%></label>
+			<div class="cbi-value-field">
+				<select class="cbi-input-select" onchange="cbi_d_update(this.id)" id="cbid.wireguard.model"
+					name="cbid.wireguard.model" size="1">
+					<option id="cbi-wireguard-model-smart" value="1" <%=default_sel1("1", mode)%><%=default_sel("1", mode)%>><%:Global%></option>
+					<option id="cbi-wireguard-model-global" value="2" <%=default_sel1("2", mode)%><%=default_sel("2", mode)%>><%:Smart%></option>
+				</select>
+			</div>
+		</div>
+
+		<div class="cbi-value" id="cbi-wireguard-fec"><label class="cbi-value-title"
+			for="cbid.wireguard.fec"><%:fec%></label>
+		<div class="cbi-value-field">
+			<select class="cbi-input-select" onchange="cbi_d_update(this.id)" id="cbid.wireguard.fec"
+				name="cbid.wireguard.fec" size="1">
+				<option id="cbi-wireguard-fec-game" value="2:1"  <%=default_sel1("2:1", fec)%><%=default_sel("2:1", fec)%>><%:game%></option>
+				<option id="cbi-wireguard-fec-video" value="20:10" <%=default_sel1("20:10", fec)%><%=default_sel("20:10", fec)%>><%:video%></option>
+				<option id="cbi-wireguard-fec-website" value="20:20" <%=default_sel1("20:20", fec)%><%=default_sel("20:20", fec)%>><%:web%></option>
+			</select>
+		</div>
+	</div>
+
+
+	<div class="cbi-value" id="cbi-wireguard-enable"><label class="cbi-value-title"
+		for="cbid.wireguard.enable"><%:enable%></label>
+	<div class="cbi-value-field">
+		<select class="cbi-input-select" onchange="cbi_d_update(this.id)" id="cbid.wireguard.enable"
+			name="cbid.wireguard.enable" size="1">
+			<option id="cbi-wireguard-enable-off" value="1" <%=default_sel1("1", enable)%><%=default_sel("1", enable)%>><%:Off%></option>
+			<option id="cbi-wireguard-enable-on" value="2"  <%=default_sel1("2", enable)%><%=default_sel("2", enable)%>><%:On%></option>
+		</select>
+	</div>
+</div>
+	
+	<table width="100%" cellspacing="10" >
+		<tr>
+			<td width="20%" align="right"><input type="submit" class="cbi-button cbi-button-apply" value="<%:Restart%>"  /></td>
+			<td width="30%" align="left"><input type="button" class="cbi-button cbi-button-apply" value="<%:Stop%>" onclick="document.location='<%=luci.dispatcher.build_url("admin", "services", "wireguard", "stop")%>'" /></td>
+		</tr>
+	</table>
+</fieldset>
+</form>
+<%+footer%>
+
+
+

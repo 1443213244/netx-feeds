@@ -1,0 +1,65 @@
+#!/bin/sh /etc/rc.common
+START=90
+
+WG_IF="wg0"
+
+run_wireguard()
+{
+	local privatekey 
+	local publickey 
+    local server
+    local server_port 
+	local address 
+	local mode
+    local enabled 
+        
+	config_get privatekey $1 privatekey
+	config_get publickey $1 publickey
+    config_get server $1 server
+    config_get server_port $1 server_port
+    config_get address $1 address
+    config_get mode $1 mode
+    config_get enabled $1 enabled  
+
+
+    # Configure network
+    uci -q delete network.${WG_IF}
+    uci set network.${WG_IF}="interface"
+    uci set network.${WG_IF}.proto="wireguard"
+    uci set network.${WG_IF}.private_key="$privatekey"
+    uci add_list network.${WG_IF}.addresses="$address"
+    
+    # Add VPN peers
+    uci -q delete network.wireguard_${WG_IF}
+    uci set network.wireguard_${WG_IF}="wireguard_${WG_IF}"
+    uci set network.wireguard_${WG_IF}.public_key="$publickey"
+    #uci set network.wireguard_${WG_IF}.preshared_key="${WG_PSK}"
+    uci set network.wireguard_${WG_IF}.endpoint_host="127.0.0.1"
+    uci set network.wireguard_${WG_IF}.endpoint_port="3333"
+    #uci set network.wireguard_${WG_IF}.route_allowed_ips="1"
+    uci set network.wireguard_${WG_IF}.persistent_keepalive="25"
+    uci add_list network.wireguard_${WG_IF}.allowed_ips="0.0.0.0/0"
+    #uci add_list network.wireguard_${WG_IF}.allowed_ips="::/0"
+    uci commit network
+    
+    if [ $enabled == 1 ]; then
+        ifup ${WG_IF}
+    else
+        ifdown ${WG_IF}
+    fi
+	(udpspeeder -c -l127.0.0.1:3333 -r$server:$server_port --mode 0 --timeout 5  >/dev/null 2>&1 )&
+
+}
+
+start()
+{
+	config_load wireguard
+	config_foreach run_wireguard wireguard    
+}
+
+stop()
+{
+    
+	killall -9 udpspeeder
+	ifdown ${WG_IF}
+}

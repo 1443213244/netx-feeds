@@ -1,0 +1,258 @@
+<%
+
+		function default_sel(value, value1)
+			local sel=nil;
+			if ( value == value1 ) then
+				sel = "\"selected\""
+			end 
+			return sel
+		end
+		function default_sel1(value, value1)
+			local sel=nil;
+			if ( value == value1 ) then
+				sel = "selected="
+			end 
+			return sel
+		end
+function default_line(value)
+	local sel=nil;
+	if ( value == node ) then
+		sel = "\"selected\""
+	else 
+		sel = ""
+	end 
+	return sel
+end
+function default_line1(value)
+	local sel=nil;
+	if ( value == node ) then
+		sel = "selected="
+	else
+		sel = ""
+	end 
+	return sel
+end
+
+local uci = luci.model.uci.cursor()
+user = uci:get('netx', 'server', 'user_name')
+password = uci:get('netx', 'server', 'password')
+service = uci:get('netx', 'server', 'redir_enabled')
+level = uci:get('netx', 'info', 'level')
+enddata = uci:get('netx', 'info', 'enddate')	
+proxy = uci:get("netx", "server", "proxy")
+node = uci:get("netx", "server", "line")
+fixed = uci:get("netx", "server", "fixed")
+
+
+	if (service == '1') then
+		services = '服务已开启'
+		status = '正常'
+	else
+		services = '服务已关闭'
+		status = '等待验证'
+	end
+	netstatus = uci:get('netx', 'server', 'status')
+
+	if (netstatus == '1') then
+		network = '网路连接成功'
+	elseif(netstatus == "30005") then
+		network = '网路连接失败'
+		status = '用户名或密码错误'
+	elseif(netstatus == "30006") then
+		network = '连接验证服务器失败'
+		status = '等待验证'
+	elseif(netstatus == "30007") then
+		network = '等待连接中'
+		status = '设备验证失败'
+	elseif(netstatus == "30008") then
+		network = '网络连接中......'
+		status = '正常'
+	elseif(netstatus == "30009") then
+		network = '网络已断开连接'
+		status = '已到期'
+	elseif(netstatus == "30010") then
+		network = '网络已断开连接'
+		status = ''
+	elseif(netstatus == "0") then
+		network = '网络已断开'
+		status = '等待验证'
+	elseif(netstatus == "33006") then
+		network = '网络连接中......'
+	
+	end
+
+if (user ~= 'user' and password ~= 'password') then
+	html = '帐号已登陆等级：'
+else
+	html = '帐号未登陆'
+end
+-%>
+
+
+<%+header%>
+<script type="text/javascript">
+	function quitx() {
+		//	document.location="/systeminfo.asp";
+		document.location = "<%=controller%>/admin/services/netx/stop";
+
+	}
+
+	function showbox() {
+		var status = document.getElementById("statserver").style.display = 'block';
+		console.log(status);
+
+	}
+</script>
+<script type="text/javascript" src="/luci-static/resources/cbi.js"></script>
+<h2 name="content"><%:Netx service%></h2>
+<br />
+<div class="alert-message notice" id="statserver" style="display:none;">
+	<img src="/luci-static/resources/icons/loading.gif" alt="加载中" style="vertical-align:middle">
+	<span>账号登陆中，请稍后…</span>
+</div>
+<form method="post" name="login" action="<%=REQUEST_URI%>" enctype="multipart/form-data">
+	<fieldset class="cbi-section" id="cbi-user-login">
+		<div class="cbi-section-login" style="float: left; width:60%">
+			<div class="cbi-value" id="cbi-service-netx-user">
+				<label class="cbi-value-title" for="cbid.service.netx.user"><%:Username%></label>
+				<div class="cbi-value-field">
+					<input type="text" class="cbi-input-text" onchange="cbi_d_update(this.id)"
+						name="cbid.service.netx.user" id="cbid.service.netx.user" value="<%=user%>" />
+				</div>
+			</div>
+
+			<div class="cbi-value" id="cbi-service-netx-password"><label class="cbi-value-title"
+					for="cbid.service.netx.password"><%:Password%></label>
+				<div class="cbi-value-field">
+
+					<input type="password" class="cbi-input-password" onchange="" name="cbid.service.netx.password"
+						id="cbid.service.netx.password" value="<%=password%>" />
+				</div>
+			</div>
+		</div>
+
+
+		<div class="cbi-section-info" style="float: right; width:40%">
+			<div class="table">
+				<div class="tr">
+					<div class="td left">
+						<%=html%>
+					</div>
+					<div class="td left">
+						<%=level%>
+					</div>
+				</div>
+				<div class="tr">
+					<div class="td left">
+						<%:Account status%>
+					</div>
+					<div class="td left">
+						<%=status%>
+					</div>
+				</div>
+				<div class="tr">
+					<div class="td left">
+						<%:End Date%>
+					</div>
+					<div class="td left">
+						<%=enddata%>
+					</div>
+				</div>
+			</div>
+		</div>
+	</fieldset>
+	<hr />
+
+	<fieldset class="cbi-section" id="cbi-system-system">
+		<div class="cbi-section-user" style="float: left; width:60%">
+			<div class="cbi-value" id="cbi-jiasu-model"><label class="cbi-value-title"
+					for="cbid.jiasu.model"><%:Acceleration mode%></label>
+				<div class="cbi-value-field">
+					<select class="cbi-input-select" onchange="cbi_d_update(this.id)" id="cbid.jiasu.model"
+						name="cbid.jiasu.model" size="1">
+						<option id="cbi-jiasu-model-default" value="2"
+							<%=default_sel1("2", proxy)%><%=default_sel("2", proxy)%>><%:Smart%></option>
+						<option id="cbi-jiasu-model-china" value="3"
+							<%=default_sel1("3", proxy)%><%=default_sel("3", proxy)%>><%:Global%></option>
+						<option id="cbi-jiasu-model-china" value="4"
+							<%=default_sel1("4", proxy)%><%=default_sel("4", proxy)%>><%:China%></option>
+					</select>
+
+				</div>
+			</div>
+
+
+			<div class="cbi-value" id="cbi-jiasu-line"><label class="cbi-value-title"
+					for="cbid.jiasu.line"><%:Acceleration line%></label>
+				<div class="cbi-value-field">
+					<select class="cbi-input-select" onchange="cbi_d_update(this.id)" id="cbid.jiasu.line"
+						name="cbid.jiasu.line" size="1">
+						<%
+						if not nixio.fs.access('/tmp/server') then
+						  print("<option id=\"cbi-jiasu-line-defulate\" value=\"0\">暂无可用节点</option>")
+						else
+						    local name = {"专属加速（推荐）","专属备用加速","主线路（推荐）","应急线路（小带宽）"}
+					            local nodes = {}
+						    local i = 1
+						    for line in io.lines("/tmp/server") do
+						        nodes[i] = line
+						        i = i + 1 
+						    end
+						    if #nodes == 2 then
+						        for k,v in pairs(nodes) do
+							    k = k+2
+   							     print("<option id=\"cbi-jiasu-line-"..v.."\" value=\""..v.."\" "
+						     ..default_line1(v)..default_line(v)..">"..name[k].."</option>")
+						        end
+						    elseif #nodes == 3 then
+							for k,v in pairs(nodes) do
+	  						    k = k+1
+  							     print("<option id=\"cbi-jiasu-line-"..v.."\" value=\""..v.."\" "
+						     ..default_line1(v)..default_line(v)..">"..name[k].."</option>")
+							end
+						    elseif #nodes == 4 then
+							for k,v in pairs(nodes) do
+						 	     print("<option id=\"cbi-jiasu-line-"..v.."\" value=\""..v.."\" "
+						     ..default_line1(v)..default_line(v)..">"..name[k].."</option>")
+							end
+						    end
+						end
+						%>
+
+					</select>
+
+				</div>
+			</div>
+			<div class="cbi-value" id="cbi-jiasu-switch"><label class="cbi-value-title"
+					for="cbid.jiasu.switch"><%:Line detection%></label>
+				<div class="cbi-value-field">
+					<select class="cbi-input-select" onchange="cbi_d_update(this.id)" id="cbid.jiasu.switch"
+						name="cbid.jiasu.switch" size="1">
+						<option id="cbi-jiasu-switch-off" value="1"
+							<%=default_sel1("1", fixed)%><%=default_sel("1", fixed)%>><%:Off%></option>
+						<option id="cbi-jiasu-switch-on" value="0"
+							<%=default_sel1("0", fixed)%><%=default_sel("0", fixed)%>><%:On%></option>
+					</select>
+
+				</div>
+			</div>
+		</div>
+		<div class="cbi-section-info" style="float: right; width:40%">
+			<div class="table">
+				<div class="tr">
+					<div class="td left"><%=services%></div>
+				</div>
+				<div class="tr">
+					<div class="td left"><%=network%></div>
+				</div>
+			</div>
+
+		</div>
+	</fieldset>
+	<div class="cbi-page-actions">
+		<input class="cbi-button cbi-button-apply" type="submit" onClick="showbox()" value="<%:Start Service%>" />
+		<input class="cbi-button cbi-button-reset" type="reset" onClick=quitx() value="<%:Stop Service%>" />
+	</div>
+	<script type="text/javascript">cbi_d_update();</script>
+	</from>
+	<%+footer%>

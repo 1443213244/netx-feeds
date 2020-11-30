@@ -1,0 +1,12 @@
+#!/bin/sh /etc/rc.common
+# Netx init script
+# Copyright (C) 2007 OpenWrt.org
+START=99
+STOP=99
+start() {
+		netx
+}
+
+stop() {
+		killall -9 white
+}

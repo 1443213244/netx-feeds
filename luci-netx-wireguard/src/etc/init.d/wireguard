@@ -1,0 +1,127 @@
+#!/bin/sh /etc/rc.common
+START=99
+
+. /lib/functions/network.sh
+network_flush_cache
+network_find_wan NET_IF
+network_find_wan6 NET_IF6
+network_get_gateway NET_GW "${NET_IF}"
+network_get_gateway6 NET_GW6 "${NET_IF6}"
+WG_IF="wg0"
+
+
+run_wireguard()
+{
+
+	local privatekey 
+	local publickey 
+    local server
+    local server_port 
+	local address 
+	local mode
+    local enable 
+    local fec
+        
+	config_get privatekey $1 privatekey
+	config_get publickey $1 publickey
+    config_get server $1 server
+    config_get server_port $1 server_port
+    config_get address $1 address
+    config_get mode $1 mode
+    config_get enable $1 enable  
+    config_get fec $1 fec
+	# Configure firewall
+	uci rename firewall.@zone[0]="lan"
+	uci rename firewall.@zone[1]="wan"
+	uci rename firewall.@forwarding[0]="lan_wan"
+	uci del_list firewall.wan.network="${WG_IF}"
+	uci add_list firewall.wan.network="${WG_IF}"
+
+	uci commit firewall
+	/etc/init.d/firewall restart >/dev/null 2>&1
+
+    # Configure network
+    uci -q delete network.${WG_IF}
+    uci set network.${WG_IF}="interface"
+    uci set network.${WG_IF}.proto="wireguard"
+    uci set network.${WG_IF}.private_key="$privatekey"
+    uci add_list network.${WG_IF}.addresses="$address"
+    
+    # Add VPN peers
+    uci -q delete network.wireguard_${WG_IF}
+    uci set network.wireguard_${WG_IF}="wireguard_${WG_IF}"
+    uci set network.wireguard_${WG_IF}.public_key="$publickey"
+    #uci set network.wireguard_${WG_IF}.preshared_key="${WG_PSK}"
+    uci set network.wireguard_${WG_IF}.endpoint_host="127.0.0.1"
+    uci set network.wireguard_${WG_IF}.endpoint_port="3333"
+    uci set network.wireguard_${WG_IF}.persistent_keepalive="25"
+    uci add_list network.wireguard_${WG_IF}.allowed_ips="0.0.0.0/0"
+    #uci add_list network.wireguard_${WG_IF}.allowed_ips="::/0"
+    uci commit network
+    #/etc/init.d/network restart &
+    if [ $enable == 1 ]; then
+		#uci del network.wg0.auto >/dev/null 2>&1
+		ifup wg0
+		case $mode in
+    		1)
+			ip route add $server via  $NET_GW
+    		;;
+    		2) 
+			cat /etc/iproute2/rt_tables |grep gfwlist
+			if [ $? -eq 0 ]; then
+				echo "ok"
+			else
+				echo "200 gfwlist" >> /etc/iproute2/rt_tables
+			fi
+			ipset -q -exist create gfwlist hash:ip
+			iptables -t mangle -N fwmark
+			iptables -t mangle -A PREROUTING -j fwmark
+			iptables -t mangle -A OUTPUT -j fwmark
+			iptables -t mangle -A fwmark -m set --match-set gfwlist dst -j MARK --set-mark 1
+			cat /usr/share/wireguard/dnsmasq_gfwlist_ipset.conf >/var/dnsmasq.d/gfwlist.conf
+			/etc/init.d/dnsmasq restart >/dev/null 2>&1&
+    		;;
+    		*)  echo 'You do not select a number between 1 to 4'
+    		;;
+		esac
+		(udpspeeder -c -l127.0.0.1:3333 -r$server:$server_port -f$fec --mode 0 --timeout 5  >/dev/null 2>&1 )&
+    else
+		ifdown wg0
+        #uci set network.wg0.auto='0'
+    fi
+   
+	#sleep 10
+}
+
+start()
+{
+	lua /usr/bin/wireguard
+	config_load wireguard
+	config_foreach run_wireguard wireguard    
+}
+
+stop()
+{
+   
+	killall -9 udpspeeder >/dev/null 2>&1
+	ip rule del fwmark 1 table gfwlist
+	ipset flush
+	rm -rf /var/dnsmasq.d/*
+	ip route del default 
+	route add default gw $NET_GW
+	/etc/init.d/firewall reload
+	/etc/init.d/dnsmasq restart >/dev/null 2>&1&
+	ifdown ${WG_IF}
+}
+
+
+
+
+
+
+
+
+
+
+
+

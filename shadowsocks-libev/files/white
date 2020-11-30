@@ -1,0 +1,130 @@
+#!/usr/bin/lua
+local socket = require("socket")
+local http = require("socket.http")
+local cjson = require("cjson")
+require("luci.model.uci")
+local x = luci.model.uci.cursor()
+port = 1024
+
+function GetHost(file)
+    c = {}
+    f = io.open(file, r)
+    for i in f:lines() do
+        table.insert(c, i)
+    end
+    f:close()
+    return c
+end
+
+function Send(ip, port, msg)
+    local ret = -1
+    c = socket.connect(ip, port)
+    if c ~= nil then
+		c:settimeout(5)
+        c:send(msg .. "\n")
+        local s, status, partial = c:receive()
+        c:close()
+        ret = 0
+    end
+    print(ret)
+    return ret
+end
+
+function logs(log)
+    local date = os.date("%Y-%m-%d %H:%M:%S")
+    local f = io.open("/var/log/netx", "a")
+    f:write(date .. " " .. log .. "\n")
+    f:close()
+end
+
+function GetPubliceIP()
+    local t = io.popen("curl -s -4 -m 10 https://api.ip.sb/ip")
+    local a = t:read("*all")
+    local ip = string.gsub(a, "\n", "")
+    t:close()
+    print('New ip is '..ip)
+    return ip
+end
+
+function GetOldIP()
+    local oldip = nil
+    local ret, errormsg = io.open("/tmp/ip", "r")
+    if ret == nil then
+        print(errormsg)
+    else
+        local a = ret:read("*all")
+        local ip = string.gsub(a, "\n", "")
+        oldip = ip
+        print('Old ip is '..oldip)
+    end
+    return oldip
+end
+
+function SetOldIP(ip)
+    file = io.open("/tmp/ip", "w")
+    file:write(ip)
+    file:close()
+    print('Set old ip done!')
+end
+
+function MsgCheck(status, ip)
+    print('Socket status is '..status)
+    if status == 0 then
+        SetOldIP(ip)
+    end
+end
+
+function lookDns(domain)
+  ss , tt = socket.dns.tohostname(domain)
+  
+	ips = {}
+  if tt ~= nil then
+    for k, v in pairs(tt.ip) do
+		  ips[k] =  v
+      print('api.ip.sb ip is '..v)
+    end
+  end
+	return ips
+end
+
+function main()
+    local hosts = GetHost("/tmp/server")
+
+    local server_port = x:get("shadowsocks-libev", "sss0", "server_port")
+    local sendstatus = -1
+
+    oldip = GetOldIP()
+
+    ips  = lookDns("api.ip.sb")
+  	for    i=1,#ips do
+          os.execute('ipset add ss_rules_dst_bypass '..ips[i]..'>/dev/null 2>&1')
+  	end
+
+    newip = GetPubliceIP()
+    if oldip == nil and newip ~= "" then
+        for i = 1, #hosts do
+            local msg = '{"ip":"' .. newip .. '", "port":"' .. server_port .. '", "oip":"192.168.8.1"}'
+            sendstatus = Send(hosts[i], port, msg)
+            logs("public ip:" .. newip)
+        end
+    else
+        if newip ~= oldip and newip ~= "" then
+            for i = 1, #hosts do
+                local msg = '{"ip":"' .. newip .. '", "port":"' .. server_port .. '", "oip":"' .. oldip .. '"}'
+                sendstatus = Send(hosts[i], port, msg)
+                logs("Old ip:" .. oldip .. " public ip:" .. newip)
+            end
+        end
+    end
+
+    MsgCheck(sendstatus, newip)
+end
+
+while true do
+    main()
+    os.execute("sleep 60")
+end
+
+
+
+

@@ -1,0 +1,17 @@
+#!/bin/sh -e
+
+url='http://update.cserver.org/netx/'
+dir='/usr/share/netx/'
+curl -s -o /tmp/md5 $url'md5'
+
+cat /tmp/md5 |while read md5 filename; do
+	oldmd5=$(md5sum $dir$filename|cut -d" " -f1)
+	if [ "$md5" != "$oldmd5" ]; then
+		echo $filename
+		curl -s -o /tmp/$filename $url$filename
+		cat /tmp/$filename > $dir$filename
+		rm -rf /tmp/$filename
+	fi
+	rm -rf /tmp/md5
+done
+

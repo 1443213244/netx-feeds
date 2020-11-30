@@ -1,0 +1,56 @@
+msgid ""
+msgstr "Content-Type: text/plain; charset=UTF-8"
+
+msgid "Account status"
+msgstr "帐号状态"
+
+msgid "End Date"
+msgstr "结束时间"
+
+msgid "Acceleration mode"
+msgstr "加速模式"
+
+msgid "Acceleration line"
+msgstr "加速线路"
+
+msgid "Line detection"
+msgstr "固定线路"
+
+
+msgid "Netx service"
+msgstr "Netx服务"
+
+msgid "Netx log"
+msgstr "Netx日志"
+
+msgid "Netx log"
+msgstr "Netx日志"
+
+
+msgid "Smart"
+msgstr "智能"
+
+msgid "Global"
+msgstr "全局"
+
+msgid "China"
+msgstr "中国"
+
+msgid "Off"
+msgstr "启用"
+
+msgid "On"
+msgstr "禁用"
+
+msgid "Start Service"
+msgstr "启动服务"
+
+msgid "Stop Service"
+msgstr "停止服务"
+
+
+
+
+
+
+

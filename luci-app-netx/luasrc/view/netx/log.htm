@@ -1,0 +1,19 @@
+<%
+local fs = require "nixio.fs"
+local log = fs.readfile("/var/log/netx") or ""
+
+function cleanLog()
+	luci.sys.call("cat /dev/null>/var/log/netx")
+end
+%>
+<%+header%>
+<script type="text/javascript" src="/luci-static/resources/cbi.js"></script>
+<h2 name="content"><%:Netx log%></h2>
+<br />
+<fieldset class="cbi-section">
+	<input type="button" class="cbi-button cbi-button-add" onclick="javascript:location.reload();" value="刷新"></input>
+</fieldset>
+<textarea style="font-size: 12px;" readonly="readonly" wrap="off" rows="729" id="syslog">
+<%=log%>
+</textarea>
+<%+footer%>

@@ -1,0 +1,45 @@
+#!/usr/bin/lua
+require("luci.model.uci")
+local http = require("socket.http")
+local ltn12 = require("ltn12")
+local cjson = require("cjson")
+local x = luci.model.uci.cursor()
+http.TIMEOUT = 60
+
+function getWiregurad()
+    local result = nil
+    local mac = x:get("network","wan_eth0_2_dev","macaddr")
+    local respbody = {}
+
+    http.request {
+        url = "http://149.129.32.238:8088/api/v1/getwg/?mac="..mac,
+        sink = ltn12.sink.table(respbody)
+    }
+    if table.concat(respbody) ~= "" then
+        json = cjson.decode(table.concat(respbody))
+	print(json[1])
+        if json[1] ~= nil then
+          result = json[1]
+        end
+    end
+    return result
+end
+
+
+local account = getWiregurad()
+if account ~= nil then
+	x:set("wireguard", "wg0", "privatekey", account['privatekey'])
+	x:set("wireguard", "wg0", "publickey", account['publickey'])
+	x:set("wireguard", "wg0", "server", account['endpoint'])
+	x:set("wireguard", "wg0", "server_port", account['port'])
+	x:set("wireguard", "wg0", "address", account['address'])
+        x:commit("wireguard")
+	return 0
+else
+	x:set("wireguard", "wg0", "enable", 2)
+	x:commit("wireguard")
+	return 1
+	
+end
+
+

@@ -1,0 +1,25 @@
+#!/bin/sh
+mode=`uci get wireguard.wg0.mode`
+enable=`uci get wireguard.wg0.enable`
+
+[ "$ACTION" = ifup -a "$INTERFACE" = wg0 ] && {
+	if [ $enable == 1 ]; then
+		case $mode in
+    		1) 
+		ip route del default
+		route add default dev wg0
+		logger -t wireguard wireguard
+		;;
+    		2) 
+		ip route add default dev wg0 table gfwlist
+		ip rule add fwmark 1 table gfwlist
+		ip route add 1.1.1.1 dev wg0
+        		;;
+    		*)  echo 'You do not select a number between 1 to 4'
+    		;;
+		esac
+
+
+	fi
+        
+}

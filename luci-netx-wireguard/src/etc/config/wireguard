@@ -1,0 +1,12 @@
+
+config wireguard 'wg0'
+	option privatekey '6MwGdQdQKojGU98RfThRNecKbixyN+jiWRxxt74A2UA='
+	option publickey 'AiJcjSKqx2ztizsedEv/F3qjEySTC5POVX8hPnfAfGY='
+	option server '104.224.189.99'
+	option server_port '30000'
+	option address '10.77.77.2/32'
+	option mode '1'
+	option fec '20:10'
+	option enable '2'
+
+

@@ -1,0 +1,16 @@
+config netx 'server'
+	option switch 'server'
+	option region 'CN'
+	option proxy '2'
+	option auto_switch '1'
+	option user_name 'user'
+	option password 'password'
+	option redir_enabled '1'
+	option fixed '0'
+	option status '30007'
+
+config netx 'info'
+	option level	 ''
+	option price ''
+	option enddate ''
+

@@ -1,0 +1,43 @@
+#!/bin/sh
+LOGTIME=$(date "+%Y-%m-%d %H:%M:%S")
+#lua /usr/bin/upserver
+cat /dev/null >/tmp/test
+port=$(uci get shadowsocks-libev.sss0.server_port)
+cat /tmp/server | while read output; do
+    {
+        /bin/tcpscan $output $port >/dev/null
+        if [ $? = 1 ]; then
+            echo "node error"
+        else
+            echo $output >>/tmp/test
+        fi
+    }
+done
+
+wait $!
+
+line=$(uci get netx.server.line)
+/bin/tcpscan $line $port >/dev/null
+if [ $? = 1 ]; then
+cat /tmp/test | while read server; do
+    if [ $line = $server ]; then
+	echo $server
+      	uci set netx.server.status=1
+    	uci commit netx
+        echo $LOGTIME "netx connet success" >>/var/log/netx
+        break
+    else
+        uci set shadowsocks-libev.sss0.server=$server
+        uci set netx.server.line=$server
+	    uci set netx.server.status=1
+    	uci commit netx
+        /etc/init.d/shadowsocks-libev restart
+        echo $LOGTIME "netx switch server success" >>/var/log/netx
+        exit
+    fi
+done
+else
+	uci set netx.server.status=1
+    uci commit netx
+fi
+
