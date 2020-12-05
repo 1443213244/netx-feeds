@@ -40,4 +40,3 @@ else
 	uci set netx.server.status=1
     uci commit netx
 fi
-

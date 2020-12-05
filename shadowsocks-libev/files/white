@@ -15,7 +15,6 @@ function GetHost(file)
     f:close()
     return c
 end
-
 function Send(ip, port, msg)
     local ret = -1
     c = socket.connect(ip, port)
@@ -26,7 +25,6 @@ function Send(ip, port, msg)
         c:close()
         ret = 0
     end
-    print(ret)
     return ret
 end
 
@@ -42,7 +40,6 @@ function GetPubliceIP()
     local a = t:read("*all")
     local ip = string.gsub(a, "\n", "")
     t:close()
-    print('New ip is '..ip)
     return ip
 end
 
@@ -55,8 +52,8 @@ function GetOldIP()
         local a = ret:read("*all")
         local ip = string.gsub(a, "\n", "")
         oldip = ip
-        print('Old ip is '..oldip)
     end
+
     return oldip
 end
 
@@ -64,26 +61,20 @@ function SetOldIP(ip)
     file = io.open("/tmp/ip", "w")
     file:write(ip)
     file:close()
-    print('Set old ip done!')
 end
 
 function MsgCheck(status, ip)
-    print('Socket status is '..status)
     if status == 0 then
         SetOldIP(ip)
     end
 end
 
 function lookDns(domain)
-  ss , tt = socket.dns.tohostname(domain)
-  
+    ss , tt = socket.dns.tohostname(domain)
 	ips = {}
-  if tt ~= nil then
     for k, v in pairs(tt.ip) do
-		  ips[k] =  v
-      print('api.ip.sb ip is '..v)
+		ips[k] =  v
     end
-  end
 	return ips
 end
 
@@ -96,9 +87,9 @@ function main()
     oldip = GetOldIP()
 
     ips  = lookDns("api.ip.sb")
-  	for    i=1,#ips do
-          os.execute('ipset add ss_rules_dst_bypass '..ips[i]..'>/dev/null 2>&1')
-  	end
+	for    i=1,#ips do
+        os.execute('ipset add ss_rules_dst_bypass '..ips[i])
+	end
 
     newip = GetPubliceIP()
     if oldip == nil and newip ~= "" then
@@ -120,11 +111,10 @@ function main()
     MsgCheck(sendstatus, newip)
 end
 
-while true do
+while 0 do
     main()
     os.execute("sleep 60")
 end
-
 
 
 

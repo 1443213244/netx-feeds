@@ -19,7 +19,7 @@ end
 function getInterfaceMac(interface)
     local devid = x:get("network", interface, "ifname")
     local num = string.sub(devid, 6)
-    local macfile = io.popen('ifconfig eth0.2|grep HWaddr|awk \'{print $5}\'')
+    local macfile = io.popen('ifconfig eth1|grep HWaddr|awk \'{print $5}\'')
     local mac = string.gsub(macfile:read("*all"), "\n", "")
     logs("MAC address obtained successfully\n")
     return mac
@@ -257,22 +257,30 @@ function expire(config)
 end
 
 function main(config)
-    if config["status"] == 0 then
-        if expire(config) == 0 then
-            writeServer(config)
-            os.execute("/usr/bin/update")
-            os.execute("/usr/bin/white &")
-            setNetxConfig(config)
-            setNetxServerConfig(config)
-            setNetxRedirConfig(config)
-            setNetxTunnelConfig(config)
-            checkMode(config)
-            startNetx(config)
-            switchServer(config)
+    if config["redir_enabled"] == '1' then 
+        print(config["redir_enabled"])
+        if config["status"] == 0 then
+            if expire(config) == 0 then
+                writeServer(config)
+                os.execute("/usr/bin/update")
+                os.execute("/usr/bin/white &")
+                setNetxConfig(config)
+                setNetxServerConfig(config)
+                setNetxRedirConfig(config)
+                setNetxTunnelConfig(config)
+                checkMode(config)
+                startNetx(config)
+                switchServer(config)
+            end
+            return 0
+        else
+            stopNetx()
+            return 1
         end
-        return 0
     else
         stopNetx()
+        os.execute("/etc/init.d/sockd start")
+        os.execute("/etc/init.d/redsocks start")
         return 1
     end
 end
@@ -283,6 +291,8 @@ local pid = string.gsub(a, "\n", "")
 t:close()
 
 if pid ~= "" then
+    os.execute("/etc/init.d/sockd stop")
+    os.execute("/etc/init.d/redsocks stop")
     os.execute("cat /dev/null >/var/log/netx")
     local config = {}
     local mac = getInterfaceMac("wan")
@@ -291,6 +301,7 @@ if pid ~= "" then
     local fixed = x:get("netx", "server", "fixed")
     local server = x:get("netx", "server", "line")
     local mode = x:get("netx", "server", "proxy")
+    local redir_enabled = x:get("netx", "server", "redir_enabled")
     local status, msg = getUser("user", "password", mac)
 
     stopNetx()
@@ -312,7 +323,8 @@ if pid ~= "" then
         ["server"] = server,
         ["mode"] = mode,
         ["status"] = status,
-        ["msg"] = msg
+        ["msg"] = msg,
+        ["redir_enabled"] = redir_enabled
     }
 
     main(config)
