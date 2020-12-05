@@ -24,7 +24,7 @@ if (luci.http.formvalue('cbid.acceleration.enable') == '1') then
 
 	luci.sys.call('sed -i \'/switch/\'d /etc/crontabs/root')
 	luci.sys.call('/etc/init.d/cron restart&')
-	luci.sys.call('/etc/init.d/shadowsocks-libev stop&&/etc/init.d/dnsmasq restart && killall -9 white')
+	luci.sys.call('/etc/init.d/shadowsocks-libev stop&&/etc/init.d/dnsmasq restart&&killall -9 netx&&killall -9 white')
 	local date=os.date("%Y-%m-%d %H:%M:%S")
 	local  f = io.open('/var/log/netx','a')
 	f:write(date.." stop service")
