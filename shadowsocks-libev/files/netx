@@ -19,7 +19,7 @@ end
 function getInterfaceMac(interface)
     local devid = x:get("network", interface, "ifname")
     local num = string.sub(devid, 6)
-    local macfile = io.popen('ifconfig eth0.2|grep HWaddr|awk \'{print $5}\'')
+    local macfile = io.popen('ifconfig wan|grep HWaddr|awk \'{print $5}\'')
     local mac = string.gsub(macfile:read("*all"), "\n", "")
     logs("MAC address obtained successfully\n")
     return mac
