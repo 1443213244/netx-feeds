@@ -121,10 +121,6 @@ function main()
 end
 
 while true do
-    main()
+    pcall(main)
     os.execute("sleep 60")
 end
-
-
-
-
