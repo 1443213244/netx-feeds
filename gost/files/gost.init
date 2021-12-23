@@ -1,22 +1,181 @@
 #!/bin/sh /etc/rc.common
-# Created By ImmortalWrt
-# https://github.com/project-openwrt
 
-START=90
-STOP=10
+USE_PROCD=1
 
-enable="$(uci get gost.@gost[0].enable)"
-run_command="$(uci get gost.@gost[0].run_command)"
+START=99
+STOP=98
 
-start()
-{
-	stop
+serverSet="proxy_ipset"
+InternalIPSet="internal_ipset"
+GreatFireWallIPSet="gfw_ipset"
+ChinaIPSet="china_ipset"
 
-	[ "${enable}" -ne "1" ] && exit 0
-	/usr/bin/gost ${run_command} &
+# sni 端口， http 和 https 转发到该端口
+SniPort=1443
+# redirect 端口
+RedirectPort=8443
+
+# 代理 ip
+server="$(uci get gost.@gost[0].server)"
+# 代理端口
+server_port="$(uci get gost.@gost[0].port)"
+# 代理算法
+model="$(uci get gost.@gost[0].model)"
+# 代理密码
+ProxyPassword="xxoo10086"
+GostProxyCommand="-F=relay+kcp://23.234.213.158:8341?c=/root/kcp.json"
+GostProxyCommand1="-F=socks5://127.0.0.1:1080"
+
+# gost 路径
+BinaryPath="/usr/bin/gost"
+
+create_ipset() {
+        ipset -N -! ${serverSet} hash:net maxelem 1000000
+        ipset -N -! ${InternalIPSet} hash:net maxelem 1000000
+        ipset -N -! ${GreatFireWallIPSet} hash:net maxelem 1000000
+        ipset -N -! ${ChinaIPSet} hash:net maxelem 1000000
+
+        # 将代理 IP 添加到 ipset 中
+        ipset add ${serverSet} ${server}
+
+        # 保留地址也直接连接，不通过代理
+        ipset add ${InternalIPSet} 0.0.0.0/8
+        ipset add ${InternalIPSet} 10.0.0.0/8
+        ipset add ${InternalIPSet} 127.0.0.0/8
+        ipset add ${InternalIPSet} 169.254.0.0/16
+        ipset add ${InternalIPSet} 172.16.0.0/12
+        ipset add ${InternalIPSet} 192.168.0.0/16
+        ipset add ${InternalIPSet} 224.0.0.0/4
+        ipset add ${InternalIPSet} 240.0.0.0/4
 }
 
-stop()
-{
-	killall -9 "gost" > "/dev/null" 2>&1
+create_iptables() {
+        echo "create iptable rule for gost"
+        # check chain exists or not
+        iptables -t nat -C GOST >/dev/null 2>&1
+        if [ $? -eq 0 ]; then
+                echo "iptables chain GOST exists, ignore command..."
+        else
+                echo "create iptables chain: GOST"
+                iptables -t nat -N GOST
+        fi
+
+        # 清空 gost chain 规则
+        iptables -t nat -F GOST
+
+        # 代理 IP 不走代理
+        iptables -t nat -I GOST 1 -p all -m set --match-set ${serverSet} dst -j ACCEPT
+        # 内部 IP 不走代理
+        iptables -t nat -I GOST 2 -p all -m set --match-set ${InternalIPSet} dst -j ACCEPT
+        # GFW IP 走代理
+        iptables -t nat -I GOST 3 -p tcp --dport 443 -m set --match-set ${GreatFireWallIPSet} dst -j REDIRECT --to-port ${SniPort}
+        iptables -t nat -I GOST 4 -p tcp -m set --match-set ${GreatFireWallIPSet} dst -j REDIRECT --to-port ${RedirectPort}
+        # 中国 IP 不走代理
+        iptables -t nat -I GOST 5 -p tcp -m set --match-set ${ChinaIPSet} dst -j ACCEPT
+        #　其他 IP 走代理
+        iptables -t nat -I GOST 6 -p tcp --dport 443 -j REDIRECT --to-port ${SniPort}
+        iptables -t nat -I GOST 7 -p tcp -j REDIRECT --to-port ${RedirectPort}
+
+        # 将 OUTPUT 和 PREROUTING 的数据转发到 GOST 链上
+        # iptables -t nat -A OUTPUT -p all -j GOST
+        # iptables -t nat -D PREROUTING -p all -j GOST
+        iptables -t nat -I PREROUTING 1 -p all -j GOST
+}
+
+remove_iptables() {
+        echo "remove gost iptable rules"
+        iptables -t nat -D PREROUTING -p all -j GOST
+        iptables -t nat -F GOST
+        iptables -t nat -X GOST
+
+        ipset flush ${serverSet}
+        ipset flush ${InternalIPSet}
+        ipset flush ${GreatFireWallIPSet}
+        ipset flush ${ChinaIPSet}
+}
+
+start_client(){
+        echo "start client"
+          procd_open_instance gost_client
+          procd_set_param command /bin/sh -c "${BinaryPath}  -L sni://:${SniPort} -L=redirect://:${RedirectPort} ${GostProxyCommand1}  > /tmp/gost.log 2>&1"
+          procd_set_param respawn
+          [ -e /proc/sys/kernel/core_pattern ] && {
+                  procd_set_param limits core="unlimited"
+          }
+          procd_close_instance
+
+}
+
+start_service() {
+
+        if [ "${model}" == 2 ]; then
+	        echo "start server at model 2"
+          procd_open_instance gost
+          procd_set_param command /bin/sh -c "${BinaryPath}  -L :1080 ${GostProxyCommand}  > /tmp/gost.log 2>&1"
+          procd_set_param respawn
+          [ -e /proc/sys/kernel/core_pattern ] && {
+                  procd_set_param limits core="unlimited"
+          }
+          procd_close_instance
+          start_client
+        else
+          echo "start server at model 1"
+          procd_open_instance gost
+          procd_set_param command /bin/sh -c "${BinaryPath} -L :1080 > /tmp/gost.log 2>&1"
+          procd_set_param respawn
+          [ -e /proc/sys/kernel/core_pattern ] && {
+                  procd_set_param limits core="unlimited"
+          }
+          procd_close_instance
+          start_client
+        fi
+        
+        create_ipset
+        create_iptables   
+}
+
+kill_gost(){
+        local service_pid=""
+
+        service_pid=$(ps -w | grep gost | grep -v grep | awk '{print $1}'|sort -r| head -1)
+        if [ "${service_pid}" != "" ]; then
+                kill -2 ${service_pid}
+        fi
+
+        # force kill process
+        service_pid=$(ps -w | grep gost | grep -v grep | awk '{print $1}'|sort -r| head -1)
+        if [ "${service_pid}" != "" ]; then
+                sleep 3
+                kill -9 ${service_pid}
+        fi
+}
+
+stop_service() {
+        echo "stop"
+        remove_iptables
+        
+        for i in 1 2;
+        do
+         kill_gost
+        done
+        
+}
+
+reload_service() {
+        echo "restart"
+        stop_service
+        start_service
+}
+
+status_service() {
+        local service_pid=""
+
+        service_pid=$(ps -w | grep gost | grep -v grep | awk '{print $1}')
+        if [ "${service_pid}" != "" ]; then
+                echo "gost is running"
+                return 1
+        else
+                echo "gost is not running"
+                return 0
+        fi
 }

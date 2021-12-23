@@ -22,3 +22,8 @@ function act_status()
 	luci.http.prepare_content("application/json")
 	luci.http.write_json(e)
 end
+
+local apply = luci.http.formvalue("cbi.apply")
+if apply then
+        luci.sys.exec("/etc/init.d/gost restart")
+end   

@@ -14,7 +14,15 @@ enable = s:option(Flag, "enable", translate("Enable"))
 enable.default = 0
 enable.rmempty = false
 
-run_command = s:option(Value, "run_command", translate("Command"))
-run_command.rmempty = false
+server = s:option(Value, "server", translate("server"))
+server.rmempty = false
+
+port = s:option(Value, "port", translate("port"))
+port.rmempty = false
+
+model=s:option(ListValue,"model",translate("model"))
+model:value("1",translate("proxy"))
+model:value("2",translate("local"))
+model.rmempty = false
 
 return mp
