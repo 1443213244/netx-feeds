@@ -1,6 +1,6 @@
 {
 	"luci-app-accelerate": {
-		"description": "Grant UCI access for luci-app-gost",
+		"description": "Grant UCI access for luci-app-accelerate",
 		"read": {
 			"uci": [ "accelerate" ]
 		},
