@@ -25,4 +25,9 @@ model:value("1",translate("proxy"))
 model:value("2",translate("local"))
 model.rmempty = false
 
+accelerate=s:option(ListValue,"accelerate",translate("accelerate"))
+accelerate:value("1",translate("classic"))
+accelerate:value("2",translate("radical"))
+accelerate.rmempty = false
+
 return mp
