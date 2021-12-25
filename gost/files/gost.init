@@ -10,28 +10,30 @@ InternalIPSet="internal_ipset"
 GreatFireWallIPSet="gfw_ipset"
 ChinaIPSet="china_ipset"
 
-# sni 端口， http 和 https 转发到该端口
+# gost状态
 enable="$(uci get gost.@gost[0].enable)"
 
-SniPort=1443
 # redirect 端口
+SniPort=1443
 RedirectPort=8443
 
 # 代理 ip
 server="$(uci get gost.@gost[0].server)"
 # 代理端口
 server_port="$(uci get gost.@gost[0].port)"
-# 代理算法
+# 加速模式
 model="$(uci get gost.@gost[0].model)"
-
+# 加速算法
 accelerate="$(uci get gost.@gost[0].accelerate)"
-# 代理密码
-ProxyPassword="xxoo10086"
-GostProxyCommand="-F=relay+kcp://23.234.213.158:8341?c=/root/kcp.json"
+#分流
+shunt="$(uci get gost.@gost[0].shunt)"
+GostProxyCommand="$(uci get gost.@gost[0].command)"
 GostProxyCommand1="-F=socks5://127.0.0.1:1080"
 
 # gost 路径
 BinaryPath="/usr/bin/gost"
+GfwList="/usr/share/gost/gfwlist.conf"
+ChinaList="/usr/share/gost/cn.zon"
 
 create_ipset() {
         ipset -N -! ${serverSet} hash:net maxelem 1000000
@@ -118,6 +120,28 @@ start_accelerate(){
         fi
 }
 
+start_dns(){
+            procd_open_instance dns
+            procd_set_param command /bin/sh -c "${BinaryPath}  -L dns://:5353?dns=tls,https://223.5.5.5/dns-query  > /tmp/gost.log 2>&1"
+            procd_set_param respawn
+            [ -e /proc/sys/kernel/core_pattern ] && {
+                    procd_set_param limits core="unlimited"
+            }
+            procd_close_instance
+}
+
+start_shunt(){
+        if [ "${shunt}" == "2" ]; then
+         cp ${GfwList} /tmp/dnsmasq.d/gfwlist.conf
+         for i in $(cat /usr/share/gost/cn.zone); do echo $i; ipset add china_ipset $i >> /dev/null 2>&1; done
+        fi
+}
+
+stop_shunt(){
+      rm /tmp/dnsmasq.d/*
+      ipset -F
+}
+
 start_service() {
         if [ "${enable}" == "1" ]; then
           if [ "${model}" == "1" ]; then
@@ -139,11 +163,12 @@ start_service() {
             }
             procd_close_instance 
           fi
-          
-          start_client
-          start_accelerate
           create_ipset
           create_iptables
+          start_dns
+          start_client
+          start_accelerate
+          start_shunt
        else
          stop_service
        fi   
@@ -173,6 +198,7 @@ stop_service() {
         # do
         #  kill_gost
         # done
+        stop_shunt
         killall -9 gost
         
 }

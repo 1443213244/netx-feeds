@@ -74,6 +74,9 @@ define Package/gost/install
 
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/gost $(1)/usr/bin/gost
+	$(INSTALL_DIR) $(1)/usr/share/gost
+	$(INSTALL_BIN) $(CURDIR)/files/cn.zone $(1)/usr/share/gost/cn.zone
+	$(INSTALL_BIN) $(CURDIR)/files/gfwlist.conf $(1)/usr/share/gost/gfwlist.conf
 
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_CONF) $(CURDIR)/files/gost.config $(1)/etc/config/gost

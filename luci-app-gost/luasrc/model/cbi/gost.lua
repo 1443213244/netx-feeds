@@ -20,6 +20,14 @@ server.rmempty = false
 port = s:option(Value, "port", translate("port"))
 port.rmempty = false
 
+command = s:option(Value, "command", translate("command"))
+command.rmempty = false
+
+shunt = s:option(ListValue, "shunt", translate("Shunt"))
+shunt:value("1",translate("Global"))
+shunt:value("2",translate("Smart"))
+shunt.rmempty = false
+
 model=s:option(ListValue,"model",translate("model"))
 model:value("1",translate("proxy"))
 model:value("2",translate("local"))
