@@ -28,7 +28,7 @@ accelerate="$(uci get gost.@gost[0].accelerate)"
 #分流
 shunt="$(uci get gost.@gost[0].shunt)"
 GostProxyCommand="$(uci get gost.@gost[0].command)"
-GostProxyCommand1="-F=socks5://127.0.0.1:1080"
+GostProxyCommand1="-F=h2c://127.0.0.1:1080"
 
 # gost 路径
 BinaryPath="/usr/bin/gost"
@@ -156,7 +156,7 @@ start_service() {
           else
             echo "start server at model 2"
             procd_open_instance gost
-            procd_set_param command /bin/sh -c "${BinaryPath} -L :1080 > /tmp/gost.log 2>&1"
+            procd_set_param command /bin/sh -c "${BinaryPath} -L h2c://:1080 > /tmp/gost.log 2>&1"
             procd_set_param respawn
             [ -e /proc/sys/kernel/core_pattern ] && {
                     procd_set_param limits core="unlimited"
@@ -165,7 +165,7 @@ start_service() {
           fi
           create_ipset
           create_iptables
-          start_dns
+          #start_dns
           start_client
           start_accelerate
           start_shunt
