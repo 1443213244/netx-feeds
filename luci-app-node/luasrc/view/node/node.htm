@@ -1,8 +1,18 @@
 <%
+local cjson = require('cjson')
 local uci = luci.model.uci.cursor()
+local lan = uci:get("network","lan", "ipaddr")
 local nods = uci:get("node","@node[0]", "nods")
 local user = uci:get("node","@node[0]", "user")
 local password = uci:get("node","@node[0]", "password")
+
+function getServer()
+	file = io.open('/root/server.json','r')
+	content = file:read('*a')
+	file:close()
+	local servers = cjson.decode(content)
+    return servers
+end
 -%>
 
 
@@ -117,24 +127,25 @@ local password = uci:get("node","@node[0]", "password")
 							<th class="cbi-section-table-cell" style="text-align:left">状态</th>
 							<th class="cbi-section-table-cell">动作</th>
 						</tr>
-							
-							<tr class="cbi-section-table-row cbi-rowstyle-2">
-								
-								<td class="cbi-value-field" style="vertical-align:middle; text-align:left; padding:3px" id="lan-ifc-description">
-									<strong>远程IP:</strong> 23.234.213.158<br>
-									<strong>场景:</strong> 直播/普通代理<br>
-									<strong>本地IP</strong>:  192.168.3.49<br>
-									<strong>relay协议端口</strong>: 50001    （手机直播推荐）<br>
-									<strong>socks5 /http协议端口</strong> 50000 （常规场景）<br>
-								</td>
-								<td>
-									运行中
-								</td>
-								<td style="width:420px">
-									<input type="button" class="cbi-button cbi-button-reload" style="width:100px" onclick="start_server(1)" title="重连此接口" value="开启">
-									<input type="button" class="cbi-button cbi-button-reset" style="width:100px" onclick="stop_server(2)" title="关闭此接口" value="停止">
-								</td>
-							</tr>
+						<%
+						local servers = getServer()
+						for k,v in pairs(servers['Servers']) do
+							print("<tr class=\"cbi-section-table-row cbi-rowstyle-2\">")
+							print("<td class=\"cbi-value-field\" style=\"vertical-align:middle; text-align:left; padding:3px\" id=\"lan-ifc-description\">")
+							print("<strong>远程IP:</strong>"..servers['Servers'][k].Ip.."<br>")
+							print("<strong>场景:</strong> 直播/普通代理<br>")
+							print("<strong>本地IP:</strong>"..lan.."<br>")
+							print("<strong>relay协议端口:</strong>"..servers['Servers'][k].Relay.."（手机直播推荐）<br>")
+							print("<strong>socks5 /http协议端口:</strong>"..servers['Servers'][k].Scosk5.."（常规场景）<br>")
+							print("</td>")
+							print("<td>运行中</td>")
+							print("<td style=\"width:420px\">")
+							print("<input type=\"button\" class=\"cbi-button cbi-button-reload\" style=\"width:100px\" onclick=\"start_server(1)\" title=\"重连此接口\" value=\"开启\">")
+ 							print("<input type=\"button\" class=\"cbi-button cbi-button-reset\" style=\"width:100px\" onclick=\"stop_server(2)\" title=\"关闭此接口\" value=\"停止\">")
+							print("</td>")
+							print("</tr>")
+						end
+						%>
 					</tbody>
 				</table>
 				</div>
