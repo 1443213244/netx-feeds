@@ -5,6 +5,7 @@
 module("luci.controller.node", package.seeall)
 require('luci.model.uci')
 local uci = luci.model.uci.cursor()
+local cjson = require('cjson')
 
 function index()
 	if not nixio.fs.access("/etc/config/node") then
@@ -16,7 +17,7 @@ function index()
 	page.dependent = true
 	page.acl_depends = { "luci-app-node" }
 	entry({"admin", "services", "node", "start"},call("start_server")).leaf=true
-	entry({"admin", "services", "node", "stop"},call("start_server")).leaf=true
+	entry({"admin", "services", "node", "stop"},call("stop_server")).leaf=true
 end
 
 
@@ -34,20 +35,23 @@ end
 -- luci.http.write('user')
 
 function start_server()
-	local user = luci.http.formvalue("id")
-	file = io.open("/root/hello", "a")
-
-	-- 在文件最后一行添加 Lua 注释
-	file:write(id)
-
-	-- 关闭打开的文件
+	local id = luci.http.formvalue("id")
+	file = io.open('/root/server.json','r')
+	content = file:read('*a')
 	file:close()
+	local servers = cjson.decode(content)
+    node = server['Server'][id]
+	-- cmd = "gost -L :"..node.Socks5.." -L relay://:"..node.Relay.." -F "..node.Protocol.."://"..node.Ip..":"..node.Port.." &"
+	luci.sys.exec("gost -L :5002 &")
 	luci.http.redirect(luci.dispatcher.build_url("admin/services/node"))
 end
 
 function stop_server()
+	local pid = luci.http.formvalue("pid")
+	luci.sys.exec("kill "..pid)
 	luci.http.redirect(luci.dispatcher.build_url("admin/services/node"))
 end
+
 
 -- local apply = luci.http.formvalue("cbi.apply")
 -- if apply then
