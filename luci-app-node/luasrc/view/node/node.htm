@@ -13,6 +13,31 @@ function getServer()
 	local servers = cjson.decode(content)
     return servers
 end
+
+function nodeStatus(port)
+	cmd = "netstat -antup|grep :::"..port.."|awk -F \' \' \'{print \$7}\'|awk -F \'/\' \'{print \$1}\'"
+	ret = luci.sys.exec(cmd)
+	return ret
+end
+
+function Get_time(date)
+    local yer = string.sub(date, 1, 4)
+    local month = string.sub(date, 6, 7)
+    local day = string.sub(date, 9, 10)
+    local end_date = os.time({year = yer, month = month, day = day})
+    return end_date
+end
+
+function expire(end_date)
+    local expire = 0
+    local curday = os.date("%Y-%m-%d", os.time())
+    local endday = end_date
+    local cur_day = Get_time(curday)
+    local end_day = Get_time(endday)
+    local day = os.difftime(end_day, cur_day) / 86400
+	
+    return day
+end
 -%>
 
 
@@ -40,9 +65,24 @@ end
 
 	}
 
-	function stop_server() {
+	function stop_server(pid) {
 		//	document.location="/systeminfo.asp";
-		document.location = "<%=controller%>/admin/services/node/stop";
+		// document.location = "<%=controller%>/admin/services/node/stop";
+		stxhr.post('<%=url('admin/services/node')%>/stop', { token: '<%=token%>',pid:+pid },
+				function(x)
+				{
+					if (x.responseText)
+					{
+						legend.style.display = 'none';
+						output.innerHTML = String.format('<pre>%h</pre>', x.responseText);
+					}
+					else
+					{
+						legend.style.display = 'none';
+						output.innerHTML = '<span class="error"><%:Bad address specified!%></span>';
+					}
+				}
+			);
 
 	}
 
@@ -138,10 +178,14 @@ end
 							print("<strong>relay协议端口:</strong>"..servers['Servers'][k].Relay.."（手机直播推荐）<br>")
 							print("<strong>socks5 /http协议端口:</strong>"..servers['Servers'][k].Scosk5.."（常规场景）<br>")
 							print("</td>")
-							print("<td>运行中</td>")
+							day = expire(servers['Servers'][k].EndDate)
+							if day <= 0  then
+								print("<td style=\"color:red\">已到期</td>")
+							else
+								print("<td>"..day.."天后到期</td>")	
+							end
 							print("<td style=\"width:420px\">")
-							print("<input type=\"button\" class=\"cbi-button cbi-button-reload\" style=\"width:100px\" onclick=\"start_server(1)\" title=\"重连此接口\" value=\"开启\">")
- 							print("<input type=\"button\" class=\"cbi-button cbi-button-reset\" style=\"width:100px\" onclick=\"stop_server(2)\" title=\"关闭此接口\" value=\"停止\">")
+							print(servers['Servers'][k].EndDate)
 							print("</td>")
 							print("</tr>")
 						end
