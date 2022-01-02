@@ -1,0 +1,22 @@
+{
+    "Servers": [
+        {
+            "Protocol":"relay+socks5",
+            "Ip": "127.0.0.1",
+            "Port": 2000,
+            "EndDate": "2022-02-01"
+        },
+        {
+            "Protocol":"relay+socks5",
+            "Ip": "127.0.0.3",
+            "Port": 2000,
+            "EndDate": "2022-01-02"
+        },
+        {
+            "Protocol":"relay+socks5",
+            "Ip": "127.0.0.4",
+            "Port": 2000,
+            "EndDate": "2022-02-01"
+        }
+    ]
+}
