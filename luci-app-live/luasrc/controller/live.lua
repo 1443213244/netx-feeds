@@ -23,7 +23,7 @@ end
 
 local user = luci.http.formvalue("user")
 local password = luci.http.formvalue("password")
-if (use ~= null and password ~= null)then
+if (user ~= nil and password ~= nil)then
 	uci:set("live","@live[0]", "user", user)
 	uci:set("live","@live[0]", "password", password)
 	uci:commit('live')

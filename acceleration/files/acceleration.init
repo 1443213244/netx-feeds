@@ -1,0 +1,46 @@
+#!/bin/sh /etc/rc.common
+
+USE_PROCD=1
+
+START=99
+STOP=98
+
+# acceleration状态
+enable="$(uci get acceleration.@acceleration[0].enable)"
+pattern="$(uci get acceleration.@acceleration[0].pattern)"
+
+
+start_service() {
+        if [ "${enable}" == "1" ]; then
+            if [ "${pattern}" == "cubic"]; then
+                sysctl -w net.ipv4.tcp_congestion_control="cubic"
+             else
+                sysctl -w net.ipv4.tcp_congestion_control="bbr"
+             fi
+        else
+            stop_service
+        fi 
+}
+
+stop_service() {
+        sysctl -w net.ipv4.tcp_congestion_control="cubic"
+}
+
+reload_service() {
+        echo "restart"
+        stop_service
+        start_service
+}
+
+status_service() {
+        local status=""
+
+        status=$(sysctl net.ipv4.tcp_congestion_control|awk -F '=' '{print $2}')
+        if [ "${status}" != " cubic" ]; then
+                echo "acceleration is running"
+                return 1
+        else
+                echo "acceleration is not running"
+                return 0
+        fi
+}

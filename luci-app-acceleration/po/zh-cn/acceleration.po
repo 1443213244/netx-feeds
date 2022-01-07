@@ -1,0 +1,29 @@
+msgid "Local accelerator."
+msgstr "本地加速服务。"
+
+msgid "RUNNING"
+msgstr "运行中"
+
+msgid "NOT RUNNING"
+msgstr "未运行"
+
+msgid "Enable"
+msgstr "启用"
+
+msgid "Command"
+msgstr "命令"
+
+msgid "Expire"
+msgstr "到期时间"
+
+msgid "Acceleration"
+msgstr "加速"
+
+msgid "Pattern"
+msgstr "模式"
+
+msgid "Radical"
+msgstr "激进"
+
+msgid "Classic"
+msgstr "经典"
