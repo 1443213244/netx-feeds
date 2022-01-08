@@ -12,7 +12,7 @@ PKG_NAME:=gost
 PKG_VERSION:=2.11.1
 PKG_RELEASE:=1
 
-PKG_SOURCE:=$(PKG_NAME)-$(PKG_VERSION).tar.gz
+PKG_SOURCE:=gost-$(PKG_VERSION).tar.gz
 PKG_SOURCE_URL:=https://codeload.github.com/ginuerzh/gost/tar.gz/v$(PKG_VERSION)?
 PKG_HASH:=skip
 
@@ -73,15 +73,15 @@ define Package/gost/install
 	$(call GoPackage/Package/Install/Bin,$(PKG_INSTALL_DIR))
 
 	$(INSTALL_DIR) $(1)/usr/bin
-	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/gost $(1)/usr/bin/gost
-	$(INSTALL_DIR) $(1)/usr/share/gost
-	$(INSTALL_BIN) $(CURDIR)/files/cn.zone $(1)/usr/share/gost/cn.zone
-	$(INSTALL_BIN) $(CURDIR)/files/gfwlist.conf $(1)/usr/share/gost/gfwlist.conf
+	$(INSTALL_BIN) $(PKG_INSTALL_DIR)/usr/bin/gost $(1)/usr/bin/sooo
+	$(INSTALL_DIR) $(1)/usr/share/sooo
+	$(INSTALL_BIN) $(CURDIR)/files/cn.zone $(1)/usr/share/sooo/cn.zone
+	$(INSTALL_BIN) $(CURDIR)/files/gfwlist.conf $(1)/usr/share/sooo/gfwlist.conf
 
 	$(INSTALL_DIR) $(1)/etc/config
-	$(INSTALL_CONF) $(CURDIR)/files/gost.config $(1)/etc/config/gost
+	$(INSTALL_CONF) $(CURDIR)/files/sooo.config $(1)/etc/config/sooo
 	$(INSTALL_DIR) $(1)/etc/init.d
-	$(INSTALL_BIN) $(CURDIR)/files/gost.init $(1)/etc/init.d/gost
+	$(INSTALL_BIN) $(CURDIR)/files/sooo.init $(1)/etc/init.d/sooo
 endef
 
 $(eval $(call GoBinPackage,gost))

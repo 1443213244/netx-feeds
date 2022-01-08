@@ -1,10 +1,12 @@
 <%
 local cjson = require('cjson')
 local uci = luci.model.uci.cursor()
-local lan = uci:get("network","lan", "ipaddr")
+local wan = uci:get("live","@live[0]", "wan")
 local nods = uci:get("live","@live[0]", "nods")
 local user = uci:get("live","@live[0]", "user")
 local password = uci:get("live","@live[0]", "password")
+local status = uci:get("live","@live[0]", "status")
+local network = luci.util.ubus("network.wan", "status", {}) or {}
 
 function getServer()
 	file = io.open('/etc/live/server.json','r')
@@ -93,12 +95,32 @@ end
 	}
 </script>
 <script type="text/javascript" src="/luci-static/resources/cbi.js"></script>
-<h2 name="content"><%:Netx service%></h2>
-<br />
+<h2 name="content"><%:Overseas live broadcast acceleration%></h2>
+<div class="cbi-map-descr"><%:One account corresponds to one IP, and the goods are sold globally.%></div>
+<fieldset class="cbi-section">
+	<p id="gost_status">
+		<em>
+			<b>
+				<%
+				if status == "1" then
+				print("<font color=\"green\">海外直播加速 运行中</font>")
+				elseif status == "2" then
+				print("<font color=\"red\">账号或密码错误</font>")
+				else
+				print("<font color=\"red\">海外直播加速 已停止</font>")
+				end
+				%>
+			</b>
+		</em>
+	</p>
+</fieldset>
 <div class="alert-message notice" id="statserver" style="display:none;">
 	<img src="/luci-static/resources/icons/loading.gif" alt="加载中" style="vertical-align:middle">
 	<span>账号登陆中，请稍后…</span>
 </div>
+<%
+ print(table.concat(network))
+%>
 <form method="post" name="login" action="<%=REQUEST_URI%>" enctype="multipart/form-data">
 	<fieldset class="cbi-section" id="cbi-user-login">
 		<div class="cbi-section-login" style="float: left; width:60%">
@@ -157,7 +179,6 @@ end
 
 
 	<fieldset class="cbi-section" id="cbi-system-system">
-
 			<div class="cbi-value" id="cbi-jiasu-line">
 				<legend><%:IP list%></legend>
 				<div class="cbi-value">
@@ -173,7 +194,7 @@ end
 							print("<tr class=\"cbi-section-table-row cbi-rowstyle-2\">")
 							print("<td class=\"cbi-value-field\" style=\"vertical-align:middle; text-align:left; padding:3px\" id=\"lan-ifc-description\">")
 							print("<strong>远程IP</strong>"..servers['Servers'][k].Ip.."<br>")
-							print("<strong>本地IP:</strong>"..lan.."<br>")
+							print("<strong>本地IP:</strong>"..wan.."<br>")
 							print("<strong>relay协议端口:</strong>"..servers['Servers'][k].Relay.."（手机直播推荐）<br>")
 							print("<strong>socks5/http协议端口:</strong>"..servers['Servers'][k].Scosk5.."(常规场景)<br>")
 							print("</td>")

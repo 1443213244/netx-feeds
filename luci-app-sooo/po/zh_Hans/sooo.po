@@ -30,3 +30,9 @@ msgstr "全局"
 
 msgid "Smart"
 msgstr "智能"
+
+msgid "Global acceleration"
+msgstr "全球加速"
+
+msgid "Accelerate global network connectivity and help enterprises develop efficiently."
+msgstr "加速网络全球连接性能，助力企业高效发展。"

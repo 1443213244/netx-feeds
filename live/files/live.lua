@@ -37,10 +37,12 @@ end
 
 function getToken(username, password, checkCode)
    url = '/jeecg-boot/sys/login'
-   request_body = cjson.encode({username="esong1",password="Esong123*",captcha=checkCode[1],checkKey=checkCode[2]})
+   request_body = cjson.encode({username=username,password=password,captcha=checkCode[1],checkKey=checkCode[2]})
    respons = httpRequest(url,'POST', request_body,'')
-   return respons['result']['token']
-  
+   if respons['code'] == 200 then
+    return respons['result']['token']
+   end
+   return 
 end
 
 function getServers(user,token)
@@ -68,7 +70,6 @@ function getPort(localServers)
     if (index ~= 0) then
         port = localServers['Servers'][index].Relay
     end
-    print(port)
     return port
 end
 
@@ -142,13 +143,22 @@ function main()
     password = uci:get("live","@live[0]", "password")
     checkCode = getCheckCode()
     token = getToken(username,password,checkCode)
-    getServers(username,token)
-    localServers = getServer('/etc/live/server.json')
-    lastServers = getServer('/etc/live/lastserver.json')
-    port = getPort(localServers)
-    lastnodes = getLastList(localServers, lastServers)
-    addServer(lastServers, lastnodes, port, localServers)
-    GostConf(localServers)
+    if token == nil then
+        uci:set("live","@live[0]", "status", "2")
+        uci:set("live","@live[0]", "enable", "0")
+        uci:commit('live')
+    else
+        uci:set("live","@live[0]", "status", "1")
+        uci:set("live","@live[0]", "enable", "1")
+        uci:commit('live')
+        getServers(username,token)
+        localServers = getServer('/etc/live/server.json')
+        lastServers = getServer('/etc/live/lastserver.json')
+        port = getPort(localServers)
+        lastnodes = getLastList(localServers, lastServers)
+        addServer(lastServers, lastnodes, port, localServers)
+        GostConf(localServers)
+    end
 end
 
 main()

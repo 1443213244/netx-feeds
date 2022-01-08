@@ -1,0 +1,11 @@
+{
+	"luci-app-sooo": {
+		"description": "Grant UCI access for luci-app-sooo",
+		"read": {
+			"uci": [ "sooo" ]
+		},
+		"write": {
+			"uci": [ "sooo" ]
+		}
+	}
+}

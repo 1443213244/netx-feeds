@@ -13,7 +13,7 @@ function index()
 	end
 
 	local page
-	page = entry({"admin", "services", "live"}, template("live/live"), _("Live"), 100)
+	page = entry({"admin", "services", "live"}, template("live/live"), _("Overseas live broadcast acceleration"), 100)
 	page.dependent = true
 	page.acl_depends = { "luci-app-live" }
 	entry({"admin", "services", "live", "start"},call("start_server")).leaf=true
@@ -28,6 +28,8 @@ if (user ~= nil and password ~= nil)then
 	uci:set("live","@live[0]", "password", password)
 	uci:commit('live')
 end
+luci.sys.exec("/etc/init.d/live restart")
+-- os.execute("/etc/init.d/live restart &");
 	-- local e={}
 	-- e.running=luci.sys.call("pgrep gost >/dev/null")==0
 	-- luci.http.prepare_content("application/json")
@@ -42,14 +44,14 @@ function start_server()
 	local servers = cjson.decode(content)
     node = server['Server'][id]
 	-- cmd = "gost -L :"..node.Socks5.." -L relay://:"..node.Relay.." -F "..node.Protocol.."://"..node.Ip..":"..node.Port.." &"
-	luci.sys.exec("gost -L :5002 &")
-	luci.http.redirect(luci.dispatcher.build_url("admin/services/node"))
+	-- luci.sys.exec("gost -L :5002 &")
+	luci.http.redirect(luci.dispatcher.build_url("admin/services/live"))
 end
 
 function stop_server()
 	local pid = luci.http.formvalue("pid")
 	luci.sys.exec("kill "..pid)
-	luci.http.redirect(luci.dispatcher.build_url("admin/services/node"))
+	luci.http.redirect(luci.dispatcher.build_url("admin/services/live"))
 end
 
 

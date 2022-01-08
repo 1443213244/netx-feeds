@@ -1,12 +1,12 @@
 -- Created By ImmortalWrt
 -- https://github.com/immortalwrt
 
-mp = Map("gost", translate("Gost"))
-mp.description = translate("A simple security tunnel written in Golang.")
+mp = Map("sooo", translate("Global acceleration"))
+mp.description = translate("Accelerate global network connectivity and help enterprises develop efficiently.")
 
-mp:section(SimpleSection).template = "gost/gost_status"
+mp:section(SimpleSection).template = "sooo/sooo_status"
 
-s = mp:section(TypedSection, "gost")
+s = mp:section(TypedSection, "sooo")
 s.anonymous=true
 s.addremove=false
 

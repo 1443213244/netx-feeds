@@ -4,8 +4,8 @@ local uci = luci.model.uci.cursor()
 local util = require "luci.util"
 
 
-mp = Map("acceleration", translate("Acceleration"))
-mp.description = translate("A simple security tunnel written in Golang.")
+mp = Map("acceleration", translate("Domestic live broadcast acceleration"))
+mp.description = translate("The industry's first live broadcast acceleration black technology, 24-hour HD streaming so easy!")
 
 mp:section(SimpleSection).template = "acceleration/acceleration_status"
 

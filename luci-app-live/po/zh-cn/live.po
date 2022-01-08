@@ -16,8 +16,11 @@ msgstr "启用"
 msgid "Command"
 msgstr "命令"
 
-msgid "Live"
-msgstr "直播"
+msgid "Overseas live broadcast acceleration"
+msgstr "海外直播加速"
+
+msgid "One account corresponds to one IP, and the goods are sold globally."
+msgstr "一个账号对应一个IP，货卖全球有保障。"
 
 msgid "IP list"
 msgstr "IP列表"
@@ -45,7 +48,6 @@ msgstr "(常规场景)"
 
 msgid "Expired"
 msgstr "已到期"
-
 
 
 

@@ -10,30 +10,30 @@ InternalIPSet="internal_ipset"
 GreatFireWallIPSet="gfw_ipset"
 ChinaIPSet="china_ipset"
 
-# gost状态
-enable="$(uci get gost.@gost[0].enable)"
+# sooo状态
+enable="$(uci get sooo.@sooo[0].enable)"
 
 # redirect 端口
 SniPort=1443
 RedirectPort=8443
 
 # 代理 ip
-server="$(uci get gost.@gost[0].server)"
+server="$(uci get sooo.@sooo[0].server)"
 # 代理端口
-server_port="$(uci get gost.@gost[0].port)"
+server_port="$(uci get sooo.@sooo[0].port)"
 # 加速模式
-model="$(uci get gost.@gost[0].model)"
+model="$(uci get sooo.@sooo[0].model)"
 # 加速算法
-accelerate="$(uci get gost.@gost[0].accelerate)"
+accelerate="$(uci get sooo.@sooo[0].accelerate)"
 #分流
-shunt="$(uci get gost.@gost[0].shunt)"
-GostProxyCommand="$(uci get gost.@gost[0].command)"
-GostProxyCommand1="-F=h2c://127.0.0.1:1080"
+shunt="$(uci get sooo.@sooo[0].shunt)"
+SoooProxyCommand="$(uci get sooo.@sooo[0].command)"
+SoooProxyCommand1="-F=h2c://127.0.0.1:1080"
 
-# gost 路径
-BinaryPath="/usr/bin/gost"
-GfwList="/usr/share/gost/gfwlist.conf"
-ChinaList="/usr/share/gost/cn.zon"
+# sooo 路径
+BinaryPath="/usr/bin/sooo"
+GfwList="/usr/share/sooo/gfwlist.conf"
+ChinaList="/usr/share/sooo/cn.zon"
 
 create_ipset() {
         ipset -N -! ${serverSet} hash:net maxelem 1000000
@@ -56,43 +56,43 @@ create_ipset() {
 }
 
 create_iptables() {
-        echo "create iptable rule for gost"
+        echo "create iptable rule for sooo"
         # check chain exists or not
-        iptables -t nat -C GOST >/dev/null 2>&1
+        iptables -t nat -C SOOO >/dev/null 2>&1
         if [ $? -eq 0 ]; then
-                echo "iptables chain GOST exists, ignore command..."
+                echo "iptables chain sooo exists, ignore command..."
         else
-                echo "create iptables chain: GOST"
-                iptables -t nat -N GOST
+                echo "create iptables chain: sooo"
+                iptables -t nat -N SOOO
         fi
 
-        # 清空 gost chain 规则
-        iptables -t nat -F GOST
+        # 清空 sooo chain 规则
+        iptables -t nat -F SOOO
 
         # 代理 IP 不走代理
-        iptables -t nat -I GOST 1 -p all -m set --match-set ${serverSet} dst -j ACCEPT
+        iptables -t nat -I SOOO 1 -p all -m set --match-set ${serverSet} dst -j ACCEPT
         # 内部 IP 不走代理
-        iptables -t nat -I GOST 2 -p all -m set --match-set ${InternalIPSet} dst -j ACCEPT
+        iptables -t nat -I SOOO 2 -p all -m set --match-set ${InternalIPSet} dst -j ACCEPT
         # GFW IP 走代理
-        iptables -t nat -I GOST 3 -p tcp --dport 443 -m set --match-set ${GreatFireWallIPSet} dst -j REDIRECT --to-port ${SniPort}
-        iptables -t nat -I GOST 4 -p tcp -m set --match-set ${GreatFireWallIPSet} dst -j REDIRECT --to-port ${RedirectPort}
+        iptables -t nat -I SOOO 3 -p tcp --dport 443 -m set --match-set ${GreatFireWallIPSet} dst -j REDIRECT --to-port ${SniPort}
+        iptables -t nat -I SOOO 4 -p tcp -m set --match-set ${GreatFireWallIPSet} dst -j REDIRECT --to-port ${RedirectPort}
         # 中国 IP 不走代理
-        iptables -t nat -I GOST 5 -p tcp -m set --match-set ${ChinaIPSet} dst -j ACCEPT
+        iptables -t nat -I SOOO 5 -p tcp -m set --match-set ${ChinaIPSet} dst -j ACCEPT
         #　其他 IP 走代理
-        iptables -t nat -I GOST 6 -p tcp --dport 443 -j REDIRECT --to-port ${SniPort}
-        iptables -t nat -I GOST 7 -p tcp -j REDIRECT --to-port ${RedirectPort}
+        iptables -t nat -I SOOO 6 -p tcp --dport 443 -j REDIRECT --to-port ${SniPort}
+        iptables -t nat -I SOOO 7 -p tcp -j REDIRECT --to-port ${RedirectPort}
 
-        # 将 OUTPUT 和 PREROUTING 的数据转发到 GOST 链上
-        # iptables -t nat -A OUTPUT -p all -j GOST
-        # iptables -t nat -D PREROUTING -p all -j GOST
-        iptables -t nat -I PREROUTING 1 -p all -j GOST
+        # 将 OUTPUT 和 PREROUTING 的数据转发到 SOOO 链上
+        # iptables -t nat -A OUTPUT -p all -j SOOO
+        # iptables -t nat -D PREROUTING -p all -j SOOO
+        iptables -t nat -I PREROUTING 1 -p all -j SOOO
 }
 
 remove_iptables() {
-        echo "remove gost iptable rules"
-        iptables -t nat -D PREROUTING -p all -j GOST
-        iptables -t nat -F GOST
-        iptables -t nat -X GOST
+        echo "remove sooo iptable rules"
+        iptables -t nat -D PREROUTING -p all -j SOOO
+        iptables -t nat -F SOOO
+        iptables -t nat -X SOOO
 
         ipset flush ${serverSet}
         ipset flush ${InternalIPSet}
@@ -102,8 +102,8 @@ remove_iptables() {
 
 start_client(){
         echo "start client"
-          procd_open_instance gost_client
-          procd_set_param command /bin/sh -c "${BinaryPath}  -L sni://:${SniPort} -L=redirect://:${RedirectPort} ${GostProxyCommand1}  > /tmp/gost.log 2>&1"
+          procd_open_instance sooo_client
+          procd_set_param command /bin/sh -c "${BinaryPath}  -L sni://:${SniPort} -L=redirect://:${RedirectPort} ${SoooroxyCommand1}  > /tmp/sooo.log 2>&1"
           procd_set_param respawn
           [ -e /proc/sys/kernel/core_pattern ] && {
                   procd_set_param limits core="unlimited"
@@ -122,7 +122,7 @@ start_accelerate(){
 
 start_dns(){
             procd_open_instance dns
-            procd_set_param command /bin/sh -c "${BinaryPath}  -L dns://:5353?dns=tls,https://223.5.5.5/dns-query  > /tmp/gost.log 2>&1"
+            procd_set_param command /bin/sh -c "${BinaryPath}  -L dns://:5353?dns=tls,https://223.5.5.5/dns-query  > /tmp/sooo.log 2>&1"
             procd_set_param respawn
             [ -e /proc/sys/kernel/core_pattern ] && {
                     procd_set_param limits core="unlimited"
@@ -133,7 +133,7 @@ start_dns(){
 start_shunt(){
         if [ "${shunt}" == "2" ]; then
          cp ${GfwList} /tmp/dnsmasq.d/gfwlist.conf
-         for i in $(cat /usr/share/gost/cn.zone); do echo $i; ipset add china_ipset $i >> /dev/null 2>&1; done
+         for i in $(cat /usr/share/sooo/cn.zone); do echo $i; ipset add china_ipset $i >> /dev/null 2>&1; done
         fi
 }
 
@@ -146,8 +146,8 @@ start_service() {
         if [ "${enable}" == "1" ]; then
           if [ "${model}" == "1" ]; then
   	        echo "start server at model 1"
-            procd_open_instance gost
-            procd_set_param command /bin/sh -c "${BinaryPath}  -L h2c://:1080 ${GostProxyCommand}  > /tmp/gost.log 2>&1"
+            procd_open_instance sooo
+            procd_set_param command /bin/sh -c "${BinaryPath}  -L h2c://:1080 ${SoooProxyCommand}  > /tmp/sooo.log 2>&1"
             procd_set_param respawn
             [ -e /proc/sys/kernel/core_pattern ] && {
                     procd_set_param limits core="unlimited"
@@ -155,8 +155,8 @@ start_service() {
             procd_close_instance
           else
             echo "start server at model 2"
-            procd_open_instance gost
-            procd_set_param command /bin/sh -c "${BinaryPath} -L h2c://:1080 > /tmp/gost.log 2>&1"
+            procd_open_instance sooo
+            procd_set_param command /bin/sh -c "${BinaryPath} -L h2c://:1080 > /tmp/sooo.log 2>&1"
             procd_set_param respawn
             [ -e /proc/sys/kernel/core_pattern ] && {
                     procd_set_param limits core="unlimited"
@@ -174,16 +174,16 @@ start_service() {
        fi   
 }
 
-kill_gost(){
+kill_sooo(){
         local service_pid=""
 
-        service_pid=$(ps -w | grep gost | grep -v grep | awk '{print $1}'|sort -r| head -1)
+        service_pid=$(ps -w | grep sooo | grep -v grep | awk '{print $1}'|sort -r| head -1)
         if [ "${service_pid}" != "" ]; then
                 kill -2 ${service_pid}
         fi
 
         # force kill process
-        service_pid=$(ps -w | grep gost | grep -v grep | awk '{print $1}'|sort -r| head -1)
+        service_pid=$(ps -w | grep sooo | grep -v grep | awk '{print $1}'|sort -r| head -1)
         if [ "${service_pid}" != "" ]; then
                 sleep 3
                 kill -9 ${service_pid}
@@ -196,10 +196,10 @@ stop_service() {
         
         # for i in 1 2;
         # do
-        #  kill_gost
+        #  kill_SOOO
         # done
         stop_shunt
-        killall -9 gost
+        killall -9 sooo
         
 }
 
@@ -212,12 +212,12 @@ reload_service() {
 status_service() {
         local service_pid=""
 
-        service_pid=$(ps -w | grep gost | grep -v grep | awk '{print $1}')
+        service_pid=$(ps -w | grep sooo | grep -v grep | awk '{print $1}')
         if [ "${service_pid}" != "" ]; then
-                echo "gost is running"
+                echo "sooo is running"
                 return 1
         else
-                echo "gost is not running"
+                echo "sooo is not running"
                 return 0
         fi
 }

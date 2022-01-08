@@ -27,3 +27,9 @@ msgstr "激进"
 
 msgid "Classic"
 msgstr "经典"
+
+msgid "Domestic live broadcast acceleration"
+msgstr "国内直播加速"
+
+msgid "The industry's first live broadcast acceleration black technology, 24-hour HD streaming so easy!"
+msgstr "业内首个直播加速黑科技，24小时高清推流so easy！"
