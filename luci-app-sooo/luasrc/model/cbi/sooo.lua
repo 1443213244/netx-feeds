@@ -1,5 +1,6 @@
 -- Created By ImmortalWrt
 -- https://github.com/immortalwrt
+local sy = require "luci.sys"
 
 mp = Map("sooo", translate("Global acceleration"))
 mp.description = translate("Accelerate global network connectivity and help enterprises develop efficiently.")
@@ -32,6 +33,9 @@ shunt:value("1",translate("Global"))
 shunt:value("2",translate("Smart"))
 shunt.rmempty = false
 
+function mp.on_commit(self)
+    sy.call("/etc/init.d/sooo restart >/dev/null 2>&1")
+end
 
 return mp
 

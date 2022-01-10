@@ -3,6 +3,7 @@
 -- https://github.com/immortalwrt
 
 module("luci.controller.sooo", package.seeall)
+local uci = luci.model.uci.cursor()
 
 function index()
 	if not nixio.fs.access("/etc/config/sooo") then
@@ -17,13 +18,19 @@ function index()
 end
 
 function act_status()
+	local status = uci:get("sooo","@sooo[0]", "status")
 	local e={}
-	e.running=luci.sys.call("pgrep sooo >/dev/null")==0
+	if status == "0" then
+		e.running=false
+	else
+		e.running=true
+	end
 	luci.http.prepare_content("application/json")
 	luci.http.write_json(e)
 end
 
-local apply = luci.http.formvalue("cbi.apply")
-if apply then
-        luci.sys.exec("/etc/init.d/sooo restart")
-end   
+-- local apply = luci.http.formvalue("cbi.apply")
+-- if apply then
+--         luci.sys.exec("/etc/init.d/sooo restart")
+-- end   
+-- luci.sys.exec("/etc/init.d/sooo restart")

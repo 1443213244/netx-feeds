@@ -2,6 +2,7 @@
 -- https://github.com/immortalwrt
 local uci = luci.model.uci.cursor()
 local util = require "luci.util"
+local sy = require "luci.sys"
 
 
 mp = Map("acceleration", translate("Domestic live broadcast acceleration"))
@@ -14,8 +15,8 @@ s.anonymous=true
 s.addremove=false
 
 enable = s:option(Value, "enable", translate("Enable"))
-enable:value("1",translate("off"))
-enable:value("2",translate("on"))
+enable:value("0",translate("off"))
+enable:value("1",translate("on"))
 enable.rmempty = false
 
 pattern = s:option(Value, "pattern", translate("Pattern"))
@@ -24,5 +25,9 @@ pattern:value("cubic",translate("Classic"))
 pattern.rmempty = false
 
 enddate = s:option(DummyValue, "enddate", translate("Expire"))
+
+function mp.on_commit(self)
+        sy.call("/etc/init.d/acceleration restart >/dev/null 2>&1")
+end
 
 return mp

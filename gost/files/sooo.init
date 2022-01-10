@@ -142,6 +142,16 @@ stop_shunt(){
       ipset -F
 }
 
+checkPort(){
+        service_pid=$(netstat -antup | grep :::1080 | awk -F ' ' '{print $7}' | awk -F '/' '{print $1}')
+        if [ "${service_pid}" != "" ]; then
+                uci set sooo.@sooo[0].status='0'
+        else
+                uci set sooo.@sooo[0].status='1'   
+        fi
+        uci commit sooo
+}
+
 start_service() {
         if [ "${enable}" == "1" ]; then
           if [ "${model}" == "1" ]; then
@@ -169,10 +179,12 @@ start_service() {
           start_client
           start_accelerate
           start_shunt
+          checkPort
        else
          stop_service
        fi   
 }
+
 
 kill_sooo(){
         local service_pid=""
@@ -200,6 +212,8 @@ stop_service() {
         # done
         stop_shunt
         killall -9 sooo
+        uci set sooo.@sooo[0].status='0'  
+        uci commit sooo
         
 }
 

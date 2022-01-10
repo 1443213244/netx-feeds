@@ -17,6 +17,8 @@ start_service() {
              else
                 sysctl -w net.ipv4.tcp_congestion_control="bbr"
              fi
+             uci set acceleration.@acceleration[0].status='1'  
+             uci commit acceleration
         else
             stop_service
         fi 
@@ -24,6 +26,8 @@ start_service() {
 
 stop_service() {
         sysctl -w net.ipv4.tcp_congestion_control="cubic"
+        uci set acceleration.@acceleration[0].status='0'  
+        uci commit acceleration
 }
 
 reload_service() {
