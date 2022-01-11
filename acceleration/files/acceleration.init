@@ -9,22 +9,142 @@ STOP=98
 enable="$(uci get acceleration.@acceleration[0].enable)"
 pattern="$(uci get acceleration.@acceleration[0].pattern)"
 
+SoooProxyCommand="-F ${protocol}://${server}:${server_port}"
+accelerationProxyCommand1="-F=h2c://127.0.0.1:1081"
+
+# sooo 路径
+BinaryPath="/usr/bin/sooo"
+
+# redirect 端口
+SniPort=1444
+RedirectPort=8444
+
+serverSet="proxy_ipset"
+InternalIPSet="internal_ipset"
+GreatFireWallIPSet="gfw_ipset"
+ChinaIPSet="china_ipset"
+
+create_ipset() {
+        ipset -N -! ${serverSet} hash:net maxelem 1000000
+        ipset -N -! ${InternalIPSet} hash:net maxelem 1000000
+        ipset -N -! ${GreatFireWallIPSet} hash:net maxelem 1000000
+        ipset -N -! ${ChinaIPSet} hash:net maxelem 1000000
+
+        # 将代理 IP 添加到 ipset 中
+        ipset add ${serverSet} ${server}
+
+        # 保留地址也直接连接，不通过代理
+        ipset add ${InternalIPSet} 0.0.0.0/8
+        ipset add ${InternalIPSet} 10.0.0.0/8
+        ipset add ${InternalIPSet} 127.0.0.0/8
+        ipset add ${InternalIPSet} 169.254.0.0/16
+        ipset add ${InternalIPSet} 172.16.0.0/12
+        ipset add ${InternalIPSet} 192.168.0.0/16
+        ipset add ${InternalIPSet} 224.0.0.0/4
+        ipset add ${InternalIPSet} 240.0.0.0/4
+}
+
+create_iptables() {
+        echo "create iptable rule for acceleration"
+        # check chain exists or not
+        iptables -t nat -C SOOO >/dev/null 2>&1
+        if [ $? -eq 0 ]; then
+                echo "iptables chain acceleration exists, ignore command..."
+        else
+                echo "create iptables chain: acceleration"
+                iptables -t nat -N acceleration
+        fi
+
+        # 清空 sooo chain 规则
+        iptables -t nat -F acceleration
+
+        # 代理 IP 不走代理
+        iptables -t nat -I acceleration 1 -p all -m set --match-set ${serverSet} dst -j ACCEPT
+        # 内部 IP 不走代理
+        iptables -t nat -I acceleration 2 -p all -m set --match-set ${InternalIPSet} dst -j ACCEPT
+        # GFW IP 走代理
+        iptables -t nat -I acceleration 3 -p tcp --dport 443 -m set --match-set ${GreatFireWallIPSet} dst -j REDIRECT --to-port ${SniPort}
+        iptables -t nat -I acceleration 4 -p tcp -m set --match-set ${GreatFireWallIPSet} dst -j REDIRECT --to-port ${RedirectPort}
+        # 中国 IP 不走代理
+        iptables -t nat -I acceleration 5 -p tcp -m set --match-set ${ChinaIPSet} dst -j ACCEPT
+        #　其他 IP 走代理
+        iptables -t nat -I acceleration 6 -p tcp --dport 443 -j REDIRECT --to-port ${SniPort}
+        iptables -t nat -I acceleration 7 -p tcp -j REDIRECT --to-port ${RedirectPort}
+
+        # 将 OUTPUT 和 PREROUTING 的数据转发到 SOOO 链上
+        # iptables -t nat -A OUTPUT -p all -j SOOO
+        # iptables -t nat -D PREROUTING -p all -j acceleration
+        iptables -t nat -I PREROUTING 1 -p all -j acceleration
+}
+
+remove_iptables() {
+        echo "remove sooo iptable rules"
+        iptables -t nat -D PREROUTING -p all -j acceleration
+        iptables -t nat -F acceleration
+        iptables -t nat -X acceleration
+
+        ipset flush ${serverSet}
+        ipset flush ${InternalIPSet}
+        ipset flush ${GreatFireWallIPSet}
+        ipset flush ${ChinaIPSet}
+}
+
+start_client(){
+        echo "start client"
+          procd_open_instance acceleration_client
+          procd_set_param command /bin/sh -c "${BinaryPath}  -L sni://:${SniPort} -L=redirect://:${RedirectPort} ${accelerationProxyCommand1}  > /tmp/sooo.log 2>&1"
+          procd_set_param respawn
+          [ -e /proc/sys/kernel/core_pattern ] && {
+                  procd_set_param limits core="unlimited"
+          }
+          procd_close_instance
+
+}
 
 start_service() {
+
         if [ "${enable}" == "1" ]; then
-            if [ "${pattern}" == "cubic"]; then
+  	    echo "start server at model 1"
+            procd_open_instance acceleration状态
+            procd_set_param command /bin/sh -c "${BinaryPath} -L h2c://:1081 > /tmp/sooo.log 2>&1"
+            procd_set_param respawn
+            [ -e /proc/sys/kernel/core_pattern ] && {
+                    procd_set_param limits core="unlimited"
+            }
+            procd_close_instance
+         if [ "${pattern}" == "cubic"]; then
                 sysctl -w net.ipv4.tcp_congestion_control="cubic"
-             else
+        else
                 sysctl -w net.ipv4.tcp_congestion_control="bbr"
-             fi
-             uci set acceleration.@acceleration[0].status='1'  
-             uci commit acceleration
+        fi
+        uci set acceleration.@acceleration[0].status='1'  
+        uci commit acceleration
+        create_ipset
+        create_iptables
+        #start_dns
+        start_client
+        #start_accelerate
+        #start_shunt
+        #checkPort
         else
             stop_service
         fi 
 }
 
 stop_service() {
+        echo "stop"
+        remove_iptables
+        local service_pid=""
+        service_pid=$(ps -w | grep sooo | grep -v grep | awk '{print $1}'|sort -r| head -1)
+        if [ "${service_pid}" != "" ]; then
+                kill -2 ${service_pid}
+        fi
+        # force kill process
+        service_pid=$(ps -w | grep sooo | grep -v grep | awk '{print $1}'|sort -r| head -1)
+        if [ "${service_pid}" != "" ]; then
+                sleep 3
+                kill -9 ${service_pid}
+        fi
         sysctl -w net.ipv4.tcp_congestion_control="cubic"
         uci set acceleration.@acceleration[0].status='0'  
         uci commit acceleration

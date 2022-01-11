@@ -33,9 +33,14 @@ shunt:value("1",translate("Global"))
 shunt:value("2",translate("Smart"))
 shunt.rmempty = false
 
+domains = s:option(DynamicList, "domain", translate("domain"))
+domains:depends("shunt","2")
+domains.rows = 10
+domains.width = 30
+
+
 function mp.on_commit(self)
     sy.call("/etc/init.d/sooo restart >/dev/null 2>&1")
 end
 
 return mp
-
