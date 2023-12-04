@@ -23,10 +23,9 @@ PKG_USE_MIPS16:=0
 GO_PKG:=github.com/ginuerzh/gost
 GO_PKG_BUILD_PKG:=github.com/ginuerzh/gost/cmd/gost
 
-# 修改适应 asuswrt-merlin.386.7.2，执行路径为 /opt/bin
 # 更多 golang package 用变量参考:
 #  https://github.com/openwrt/packages/blob/master/lang/golang/golang-package.mk
-GO_PKG_INSTALL_BIN_PATH:=/bin
+GO_PKG_INSTALL_BIN_PATH:=/usr/bin
 
 include $(INCLUDE_DIR)/package.mk
 include $(TOPDIR)/feeds/packages/lang/golang/golang-package.mk
