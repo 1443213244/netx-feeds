@@ -11,7 +11,7 @@ PKG_NAME:=luci-app-live
 PKG_VERSION:=1.0
 PKG_RELEASE:=1
 LUCI_TITLE:=LuCI support for Gost node list
-LUCI_DEPENDS:=+gost
+LUCI_DEPENDS:=+gost +live
 LUCI_PKGARCH:=all
 
 PKG_MAINTAINER:=ImmortalWrt
