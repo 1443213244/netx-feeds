@@ -13,7 +13,7 @@ function index()
 	local page
 	page = entry({"admin", "services", "sooo"}, cbi("sooo"), _("Global acceleration"), 100)
 	page.dependent = true
-	page.acl_depends = { "luci-app-sooo" }
+	-- page.acl_depends = { "luci-app-sooo" }
 	entry({"admin", "services", "sooo", "status"},call("act_status")).leaf=true
 end
 

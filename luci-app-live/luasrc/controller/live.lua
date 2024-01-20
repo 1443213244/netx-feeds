@@ -15,7 +15,7 @@ function index()
 	local page
 	page = entry({"admin", "services", "live"}, template("live/live"), _("Overseas live broadcast acceleration"), 100)
 	page.dependent = true
-	page.acl_depends = { "luci-app-live" }
+	-- page.acl_depends = { "luci-app-live" }
 	entry({"admin", "services", "live", "start"},call("start_server")).leaf=true
 	entry({"admin", "services", "live", "stop"},call("stop_server")).leaf=true
 end
