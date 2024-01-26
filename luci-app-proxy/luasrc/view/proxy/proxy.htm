@@ -1,0 +1,85 @@
+<%+header%>
+  <div id="cbi-map" class="cbi-map">
+    <form id="proxy-form" method="post" action="<%= luci.dispatcher.build_url('admin', 'services', 'proxy','save_proxy') %>">
+      <div class="cbi-section">
+        <h2>新增IP</h2>
+        <table class="cbi-section-table" style="margin: 0 auto;">
+          <tbody>
+            <tr>
+              <td>
+                <h3>接口配置</h3>
+              </td>
+            <tr>
+              <td>绑定接口:</td>
+              <td>
+                <select name="interface" onchange="toggleNameInput(this)">
+                  <option value="2.4G">2.4G</option>
+                  <option value="5G">5G</option>
+                  <option value="lan">lan</option>
+                </select>
+              </td>
+            </tr>
+            <tr id="ssid">
+              <td>WIFI名称:</td>
+              <td><input type="text" name="ssid" placeholder="Name"></td>
+            </tr>
+            <tr id="key">
+              <td>WIFI密码:</td>
+              <td><input type="password" name="key" placeholder="Name"></td>
+            </tr>
+            <tr>
+              <td>
+                <h3>代理信息</h3>
+              </td>
+            </tr>
+
+            <tr>
+              <td>IP:</td>
+              <td><input type="text" name="ip" placeholder="IP"></td>
+            </tr>
+            <tr>
+              <td>端口:</td>
+              <td><input type="text" name="port" placeholder="Port"></td>
+            </tr>
+            <tr>
+              <td>账号:</td>
+              <td><input type="text" name="username" placeholder="Username"></td>
+            </tr>
+            <tr>
+              <td>密码:</td>
+              <td><input type="text" name="password" placeholder="Password"></td>
+            </tr>
+            <tr>
+              <td>协议:</td>
+              <td>
+                <select name="protocol">
+                  <option value="http">HTTP</option>
+                  <option value="https">HTTPS</option>
+                  <option value="relay+mtls">relay+mtls</option>
+                </select>
+              </td>
+            </tr>
+            <tr>
+              <td colspan="2"><input type="submit" value="添加"></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </form>
+  </div>
+
+  <script>
+    function toggleNameInput(selectElement) {
+      var ssid = document.getElementById("ssid");
+      var key = document.getElementById("key")
+
+      if (selectElement.value === "lan") {
+        ssid.style.display = "none";
+        key.style.display="none";
+      } else {
+        ssid.style.display = "table-row";
+        key.style.display = "table-row";
+      }
+    }
+  </script>
+  <%+footer%>
