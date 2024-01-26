@@ -27,6 +27,13 @@ function create_interface(name, ip, device)
         start = 100,
         limit = 150,
         leasetime = "12h",
+        dhcpv4 = "server",
+        dhcpv6 = "server",
+        ra = "server",
+        ra_slaac = "1",
+        ra_flags = "managed-config",
+        ra_flags = "other-config",
+
     })
 
     uci:commit("network")
