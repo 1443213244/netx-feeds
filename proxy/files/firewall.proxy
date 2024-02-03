@@ -1,3 +1,8 @@
+#!/bin/sh
+
+# 启用调试模式
+set -x
+
 add_proxy_rule(){
     ip rule add fwmark 1 lookup 100
     ip route add local 0.0.0.0/0 dev lo table 100
@@ -29,3 +34,13 @@ remove_proxy_rule(){
     iptables -t mangle -F GOST_LOCAL
     iptables -t mangle -X GOST_LOCAL
 }
+
+# 根据命令行参数执行相应的函数
+if [ "$1" == "add_proxy_rule" ]; then
+    add_proxy_rule
+elif [ "$1" == "remove_proxy_rule" ]; then
+    remove_proxy_rule
+else
+    echo "Usage: $0 [add_proxy_rule|remove_proxy_rule]"
+    exit 1
+fi

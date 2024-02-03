@@ -1,37 +1,48 @@
+#
+# Copyright (C) 2015-2016 OpenWrt.org
+#
+# This is free software, licensed under the GNU General Public License v3.
+#
+
 include $(TOPDIR)/rules.mk
 
 PKG_NAME:=proxy
-PKG_VERSION:=1.0
-PKG_RELEASE:=1
+PKG_VERSION:=0.1
+PKG_RELEASE:=20220102
 
 include $(INCLUDE_DIR)/package.mk
 
-define Package/proxy
-  SECTION:=net
-  CATEGORY:=Network
-  TITLE:=Proxy Service
-  PKG_MAINTAINER:=RexChou <rexchou2012@gmail.com>
+define Package/$(PKG_NAME)
+	SECTION:=net
+	CATEGORY:=Network
+	TITLE:=proxy.
+	URL:=http://www.esong.com/
 endef
 
-define Package/proxy/description
-  A proxy service for OpenWrt
+define Package/$(PKG_NAME)/description
+	proxy.
 endef
 
 define Build/Prepare
-  mkdir -p $(PKG_BUILD_DIR)
-  $(CP) ./files/* $(PKG_BUILD_DIR)/
 endef
 
-define Package/proxy/install
-  $(INSTALL_DIR) $(1)/etc/init.d
-  $(INSTALL_BIN) ./files/proxy.init $(1)/etc/init.d/proxy
-
-  $(INSTALL_DIR) $(1)/etc/config
-  $(INSTALL_CONF) ./files/proxy.conf $(1)/etc/config/proxy
-
-  $(INSTALL_DIR) $(1)/usr/bin
-  $(INSTALL_BIN) $(PKG_BUILD_DIR)/proxy $(1)/usr/bin/proxy
-  $(INSTALL_BIN) $(PKG_BUILD_DIR)/firewall.proxy $(1)/bin/firewall.proxy
+define Build/Configure
 endef
 
-$(eval $(call BuildPackage,proxy))
+define Build/Compile
+endef
+
+define Package/$(PKG_NAME)/install
+	$(INSTALL_DIR) $(1)/usr/bin
+	$(INSTALL_BIN) ./files/proxy $(1)/usr/bin/proxy
+  	$(INSTALL_BIN) ./files/firewall.proxy $(1)/usr/bin/firewall.proxy
+	$(INSTALL_BIN) ./files/proxy-config-script.sh $(1)/usr/bin/proxy-config-script
+	
+	$(INSTALL_DIR) $(1)/etc/config
+	$(INSTALL_CONF) ./files/proxy.conf $(1)/etc/config/proxy
+	
+	$(INSTALL_DIR) $(1)/etc/init.d
+	$(INSTALL_BIN) ./files/proxy.init $(1)/etc/init.d/proxy
+endef
+
+$(eval $(call BuildPackage,$(PKG_NAME)))

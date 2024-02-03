@@ -4,7 +4,7 @@ START=99
 STOP=01
 
 PROXY_BINARY="/usr/bin/proxy"
-PROXY_CONFIG_SCRIPT="/usr/bin/proxy-config-script.sh"
+PROXY_CONFIG_SCRIPT="/usr/bin/proxy-config-script"
 IPTABLES_RULES_SCRIPT="/usr/bin/firewall.proxy"
 
 start() {

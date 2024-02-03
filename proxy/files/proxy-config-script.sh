@@ -11,13 +11,14 @@ generate_proxy_config() {
     for i in $(seq 0 $((proxy - 1))); do
         port=$(uci get proxy.@proxy[$i].port)
         ip=$(uci get proxy.@proxy[$i].ip)
+        local_port=$(uci get proxy.@proxy[$i].local_port)
         username=$(uci get proxy.@proxy[$i].username)
         password=$(uci get proxy.@proxy[$i].password)
 
         echo "- name: service-$i" >> "$PROXY_CONFIG_FILE"
-        echo "  addr: :$port" >> "$PROXY_CONFIG_FILE"
+        echo "  addr: :$local_port" >> "$PROXY_CONFIG_FILE"
         echo "  handler:" >> "$PROXY_CONFIG_FILE"
-        echo "    type: relay" >> "$PROXY_CONFIG_FILE"
+        echo "    type: red" >> "$PROXY_CONFIG_FILE"
         echo "    chain: chain-$i" >> "$PROXY_CONFIG_FILE"
         echo "    metadata:" >> "$PROXY_CONFIG_FILE"
         echo "      sniffing: true" >> "$PROXY_CONFIG_FILE"
