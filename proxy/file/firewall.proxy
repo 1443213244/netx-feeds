@@ -1,0 +1,31 @@
+add_proxy_rule(){
+    ip rule add fwmark 1 lookup 100
+    ip route add local 0.0.0.0/0 dev lo table 100
+
+    # 创建 DIVERT 链
+    iptables -t mangle -N DIVERT
+    iptables -t mangle -A DIVERT -j MARK --set-mark 1
+    iptables -t mangle -A DIVERT -j ACCEPT
+    iptables -t mangle -A PREROUTING -p tcp -m socket -j DIVERT
+
+    # 创建 GOST_LOCAL 链
+    iptables -t mangle -N GOST_LOCAL
+    iptables -t mangle -A GOST_LOCAL -p tcp -d 127.0.0.0/8 -j RETURN
+    iptables -t mangle -A GOST_LOCAL -p tcp -d 255.255.255.255/32 -j RETURN
+    iptables -t mangle -A GOST_LOCAL -p tcp -d 192.168.0.0/16 -j RETURN
+    iptables -t mangle -A GOST_LOCAL -p tcp -m mark --mark 100 -j RETURN 
+    iptables -t mangle -A GOST_LOCAL -p tcp -j MARK --set-mark 1
+    iptables -t mangle -A OUTPUT -p tcp -j GOST_LOCAL
+
+    # 转发源地址为192.168.2.0/24的流量到1080端口
+    iptables -t mangle -A PREROUTING -p tcp -s 192.168.2.0/24 -j TPROXY --tproxy-mark 0x1/0x1 --on-ip 127.0.0.1 --on-port 1080
+
+    # 转发源地址为192.168.3.0/24的流量到1081端口
+    iptables -t mangle -A PREROUTING -p tcp -s 192.168.3.0/24 -j TPROXY --tproxy-mark 0x1/0x1 --on-ip 127.0.0.1 --on-port 1081
+}
+
+remove_proxy_rule(){
+    iptables -t mangle -D OUTPUT -p tcp -j GOST_LOCAL
+    iptables -t mangle -F GOST_LOCAL
+    iptables -t mangle -X GOST_LOCAL
+}

@@ -1,0 +1,35 @@
+#!/bin/sh /etc/rc.common
+
+START=99
+STOP=01
+
+PROXY_BINARY="/usr/bin/proxy"
+PROXY_CONFIG_SCRIPT="/usr/bin/proxy-config-script.sh"
+IPTABLES_RULES_SCRIPT="/usr/bin/firewall.proxy"
+
+start() {
+    echo "Generating PROXY configuration..."
+    $PROXY_CONFIG_SCRIPT  # 调用生成 PROXY 配置的脚本
+
+    echo "Starting PROXY..."
+    $PROXY_BINARY -C "/tmp/proxy.yaml"  # 启动 PROXY
+    $IPTABLES_RULES_SCRIPT add_proxy_rule
+}
+
+stop() {
+    echo "Stopping PROXY..."
+    killall proxy  # 停止 PROXY 进程
+    $IPTABLES_RULES_SCRIPT remove_proxy_rule
+}
+
+restart() {
+    stop
+    sleep 1
+    start
+}
+
+reload() {
+    echo "Reloading PROXY configuration..."
+    $PROXY_CONFIG_SCRIPT  # 调用生成 PROXY 配置的脚本
+    restart
+}
