@@ -12,7 +12,7 @@ start() {
     $PROXY_CONFIG_SCRIPT  # 调用生成 PROXY 配置的脚本
 
     echo "Starting PROXY..."
-    $PROXY_BINARY -C "/tmp/proxy.yaml"  # 启动 PROXY
+    $PROXY_BINARY -C "/tmp/proxy.yaml" &  # ...... PROXY
     $IPTABLES_RULES_SCRIPT add_proxy_rule
 }
 

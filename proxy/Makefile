@@ -1,8 +1,6 @@
-#
 # Copyright (C) 2015-2016 OpenWrt.org
 #
 # This is free software, licensed under the GNU General Public License v3.
-#
 
 include $(TOPDIR)/rules.mk
 
@@ -35,7 +33,7 @@ endef
 define Package/$(PKG_NAME)/install
 	$(INSTALL_DIR) $(1)/usr/bin
 	$(INSTALL_BIN) ./files/proxy $(1)/usr/bin/proxy
-  	$(INSTALL_BIN) ./files/firewall.proxy $(1)/usr/bin/firewall.proxy
+	$(INSTALL_BIN) ./files/firewall.proxy $(1)/usr/bin/firewall.proxy
 	$(INSTALL_BIN) ./files/proxy-config-script.sh $(1)/usr/bin/proxy-config-script
 	
 	$(INSTALL_DIR) $(1)/etc/config
