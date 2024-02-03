@@ -185,10 +185,10 @@ end
 
 function count_proxys()
     local handle = uci.cursor()
-    local count = 0
+    local count = 2
 
     handle:foreach("proxy", "proxy", function(s)
-        count = count + 2
+        count = count + 1
     end)
 
     return count
