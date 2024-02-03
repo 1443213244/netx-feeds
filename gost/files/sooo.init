@@ -5,6 +5,14 @@ USE_PROCD=1
 START=99
 STOP=98
 
+
+sooo=$(uci show sooo | grep -oE '^sooo\.@sooo\[[0-9]+\]' | sort -u | wc -l)
+
+for i in $(seq 0 $((sooo - 1))); do
+   ip=$(uci get sooo.@sooo[$i].server)
+   echo $ip
+done
+
 serverSet="proxy_ipset"
 InternalIPSet="internal_ipset"
 GreatFireWallIPSet="gfw_ipset"

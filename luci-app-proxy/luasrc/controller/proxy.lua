@@ -4,10 +4,6 @@ local uci = luci.model.uci.cursor()
 local http = require("luci.http")
 
 function index()
-    -- if not nixio.fs.access("/etc/config/live") then
-    --     return
-    -- end
-
     local page = entry({"admin", "services", "proxy"}, template("proxy/proxy"), _("Overseas live broadcast acceleration"), 100)
     page.dependent = true
 
@@ -15,25 +11,27 @@ function index()
 end
 
 function create_interface(name, ip, device)
-    uci:section("network", "interface", name, {
+    local network_section = {
         device = device,
         proto = "static",
         ipaddr = ip,
         netmask = "255.255.255.0",
-    })
+    }
 
-    uci:section("dhcp", name, {
+    uci:section("network", "interface", name, network_section)
+    uci:section("dhcp", "dhcp", name, {
+        start = '100',
+        limit = '150',
+        leasetime = '12h',
+        force = '1',
+        dhcpv4 = 'server',
+        ra_flags = 'managed-config',
+        ra_flags = 'other-config',
+        ra = 'hybrid',
+        ndp = 'hybrid',
+        dhcpv6 = 'hybrid',
+        ra_management = '1',
         interface = name,
-        start = 100,
-        limit = 150,
-        leasetime = "12h",
-        dhcpv4 = "server",
-        dhcpv6 = "server",
-        ra = "server",
-        ra_slaac = "1",
-        ra_flags = "managed-config",
-        ra_flags = "other-config",
-
     })
 
     uci:commit("network")
@@ -42,30 +40,33 @@ end
 
 function create_ssid(interface, ssid, key)
     local device
+
     if interface == "2.4G" then
-        device = "radio0"
+        device = "MT7981_1_1"
     elseif interface == "5G" then
-        device = "radio1"
+        device = "MT7981_1_2"
     else
         print("Unknown interface:", interface)
         return
     end
 
-    uci:section("wireless", "wifi-iface", ssid, {
+    local wifi_section = {
         device = device,
         network = ssid,
         mode = "ap",
         ssid = ssid,
         encryption = "psk2",
-        key = key
-    })
+        key = key,
+    }
 
+    uci:section("wireless", "wifi-iface", ssid, wifi_section)
     uci:commit("wireless")
     print("SSID configuration for " .. interface .. " written successfully.")
 end
 
 function create_vlan()
     local file, err = io.open('/ssid', "w")
+
     if file then
         file:write("lan")
         file:close()
@@ -95,7 +96,7 @@ function save_proxy()
         create_firewall_zone(ssid, ssid, "ACCEPT", "ACCEPT", "ACCEPT")
         os.execute("sleep 3")
         local device = find_virtual_interface(ssid)
-        create_interface(ssid, "192.168.2.1", device)
+        create_interface(ssid, "192.168." .. count_proxys() .. ".1", device)
     else
         create_vlan()
     end
@@ -104,61 +105,91 @@ function save_proxy()
     local unique_name = os.time()
 
     -- Save the proxy configuration to UCI
-        uci:section("proxy", "proxy", unique_name, {
-            name = ssid,
-            interface = interface,
-            ip = ip,
-            port = port,
-            username = username,
-            password = password,
-            protocol = protocol
-        })
+    local proxy_section = {
+        name = ssid,
+        interface = interface,
+        ip = ip,
+        port = port,
+        local_port = find_local_port(),
+        local_ip = "192.168." .. count_proxys() .. ".1",
+        username = username,
+        password = password,
+        protocol = protocol,
+    }
 
-        uci:commit("proxy")
-        uci:save("proxy")
-
+    uci:section("proxy", "proxy", unique_name, proxy_section)
+    uci:commit("proxy")
+    uci:save("proxy")
 
     luci.http.redirect(luci.dispatcher.build_url("admin", "services", "proxy"))
 end
-
 
 function find_virtual_interface(ssid)
     local handle = io.popen("iwinfo | grep " .. ssid .. " | awk -F ' ' '{print $1}'")
     local virtualInterface = handle:read("*a")
     handle:close()
 
-    -- 去除换行符
+    -- Remove newline characters
     virtualInterface = virtualInterface:gsub("\n", "")
-    
+
     return virtualInterface
 end
 
 function create_firewall_zone(zone_name, network, input, output, forward)
-    -- 检查区域是否已存在，如果存在则返回
+    -- Check if the zone already exists, if it does, return
     if uci:get("firewall", zone_name) then
         print("Firewall zone '" .. zone_name .. "' already exists.")
         return
     end
 
-    -- 创建防火墙区域
+    -- Create the firewall zone
     uci:section("firewall", "zone", zone_name, {
         name = zone_name,
         network = network,
         input = input,
         output = output,
-        forward = forward
+        forward = forward,
     })
 
-    uci:section("firewall","forwarding",zone_name.."_wan",{
+    uci:section("firewall", "forwarding", zone_name .. "_wan", {
         src = zone_name,
-        dest = "wan"
+        dest = "wan",
     })
 
-    -- 提交和保存更改
+    -- Commit and save the changes
     uci:commit("firewall")
     uci:save("firewall")
 
     print("Firewall zone '" .. zone_name .. "' created successfully.")
 end
 
+function find_local_port()
+    local start_port = 1080
 
+    while true do
+        local found = false
+        local handle = io.popen("netstat -tln")
+        local result = handle:read("*a")
+        handle:close()
+
+        if not string.match(result, ":" .. start_port .. " ") then
+            found = true
+            return start_port
+        end
+
+        if not found then
+            start_port = start_port + 1
+        end
+    end
+end
+
+function count_proxys()
+    local handle = uci.cursor()
+    local count = 0
+
+    handle:foreach("proxy", "proxy", function(s)
+        count = count + 2
+    end)
+
+    return count
+end
