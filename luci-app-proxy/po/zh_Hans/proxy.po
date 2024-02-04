@@ -25,6 +25,14 @@ msgstr "编辑节点"
 msgid "Delete node"
 msgstr "删除节点"
 
+msgid "Node configuration not found."
+msgstr "没有找到节点。"
+
+msgid "New node"
+msgstr "添加节点"
+
+
+
 
 
 
