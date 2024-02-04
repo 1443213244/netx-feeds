@@ -1,20 +1,55 @@
 <%+header%>
+<style>
+  .item {
+    border: 1px solid #ddd;
+    padding: 10px;
+    margin: 10px 0;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .info {
+    flex: 1;
+  }
+
+  .buttons button {
+    margin-left: 10px;
+  }
+</style>
+<script>
+  function redirectToNewPage() {
+    var newPageUrl = "/cgi-bin/luci/admin/services/proxy";
+    window.location.href = newPageUrl;
+  }
+</script>
 <h2 name="content"><%: Overseas live broadcast acceleration %></h2>
 <div class="cbi-map-descr"><%: One account corresponds to one IP, and the goods are sold globally. %></div>
-<div class="item">
-  <div class="info">
-    <h4><%= _('节点名称') %>: <%= _('节点 2') %></h4>
-    <p><%= _('IP 地址') %>: 192.168.1.2</p>
-    <p><%= _('状态') %>: <%= _('运行中') %></p>
-    <p><%= _('接口') %>: eth1</p>
-  </div>
 
-  <div class="buttons">
-    <button><%= _('重启节点') %></button>
-    <button><%= _('停止节点') %></button>
-    <button><%= _('编辑节点') %></button>
-  </div>
-</div>
+<% local uci = luci.model.uci.cursor() %>
+<% local has_proxy_config = false %>
+<% uci:foreach("proxy", "proxy", function(config) %>
+  <div class="item">
+    <div class="info">
+      <h4><%= _('ssid') %>: <%= config.name %></h4>
+      <p><%= _('IP address') %>: <%= config.ip %></p>
+      <p><%= _('state') %>: <%= _('Running') %></p>
+      <p><%= _('interface') %>: <%= config.interface %></p>
+    </div>
 
-<button><%= _('新增IP') %></button>
+    <div class="buttons">
+      <button><%= _('Restart node') %></button>
+      <button><%= _('Stop node') %></button>
+      <button><%= _('Edit node') %></button>
+    </div>
+  </div>
+  <% has_proxy_config = true %>
+<% end) %>
+
+<% if not has_proxy_config then %>
+  <div class="item">
+    <p><%= _('Node configuration not found.') %></p>
+  </div>
+<% end %>
+
+<button onclick="redirectToNewPage()"><%= _('New node') %></button>
 <%+footer%>
