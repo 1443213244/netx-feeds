@@ -4,7 +4,7 @@ local uci = luci.model.uci.cursor()
 local http = require("luci.http")
 
 function index()
-    entry({"admin", "services", "proxy_status"}, template("proxy/proxy_status"), _("Overseas live broadcast acceleration"), 100)
+    entry({"admin", "services", "proxy_status"}, template("proxy/proxy_status"), translate("Overseas live broadcast acceleration"), 100)
     entry({"admin", "services", "proxy"}, template("proxy/proxy")).leaf = true
     entry({"admin", "services", "proxy", "save_proxy"}, call("save_proxy")).leaf = true
 end
