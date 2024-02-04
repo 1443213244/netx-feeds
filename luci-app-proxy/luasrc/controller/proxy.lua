@@ -91,27 +91,30 @@ function save_proxy()
         return
     end
 
+    luci.http.redirect(luci.dispatcher.build_url("admin", "services", "proxy"))
+
     if interface ~= "lan" then
+        luci.http.redirect(luci.dispatcher.build_url("admin", "services", "proxy"))
         create_ssid(interface, ssid, key)
         create_firewall_zone(ssid, ssid, "ACCEPT", "ACCEPT", "ACCEPT")
         os.execute("sleep 3")
         local device = find_virtual_interface(ssid)
-        create_interface(ssid, "192.168." .. count_proxys() .. ".1", device)
+        create_interface(ssid, "192.168." .. count_proxys()+2 .. ".1", device)
     else
         create_vlan()
     end
 
-    -- Generate a unique name (you can use a better logic to generate it)
-    local unique_name = os.time()
+    -- -- Generate a unique name (you can use a better logic to generate it)
+    -- local unique_name = os.time()
 
-    -- Save the proxy configuration to UCI
+    -- -- Save the proxy configuration to UCI
     local proxy_section = {
         name = ssid,
         interface = interface,
         ip = ip,
         port = port,
-        local_port = find_local_port(),
-        local_ip = "192.168." .. count_proxys() .. ".1",
+        local_port = 1080 + count_proxys,
+        local_ip = "192.168." .. count_proxys()+2 .. ".1",
         username = username,
         password = password,
         protocol = protocol,
@@ -120,8 +123,8 @@ function save_proxy()
     uci:section("proxy", "proxy", unique_name, proxy_section)
     uci:commit("proxy")
     uci:save("proxy")
+    os.execute("/etc/init.d/proxy restart")
 
-    luci.http.redirect(luci.dispatcher.build_url("admin", "services", "proxy"))
 end
 
 function find_virtual_interface(ssid)
@@ -163,33 +166,14 @@ function create_firewall_zone(zone_name, network, input, output, forward)
     print("Firewall zone '" .. zone_name .. "' created successfully.")
 end
 
-function find_local_port()
-    local start_port = 1080
-
-    while true do
-        local found = false
-        local handle = io.popen("netstat -tln")
-        local result = handle:read("*a")
-        handle:close()
-
-        if not string.match(result, ":" .. start_port .. " ") then
-            found = true
-            return start_port
-        end
-
-        if not found then
-            start_port = start_port + 1
-        end
-    end
-end
-
 function count_proxys()
-    local handle = uci.cursor()
-    local count = 2
+    local handle = io.popen("uci show proxy | grep -oE '^proxy\\.@proxy\\[[0-9]+\\]' | sort -u | wc -l")
+    local num_str = handle:read("*a")
+    handle:close()
 
-    handle:foreach("proxy", "proxy", function(s)
-        count = count + 1
-    end)
+    local num = tonumber(num_str)
 
-    return count
+    return math.floor(num)
 end
+
+
