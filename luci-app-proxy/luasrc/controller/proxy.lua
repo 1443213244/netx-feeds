@@ -75,58 +75,6 @@ function create_vlan()
     end
 end
 
-function save_proxy()
-    local ssid = luci.http.formvalue("ssid")
-    local key = luci.http.formvalue("key")
-    local interface = luci.http.formvalue("interface")
-    local ip = luci.http.formvalue("ip")
-    local port = luci.http.formvalue("port")
-    local username = luci.http.formvalue("username")
-    local password = luci.http.formvalue("password")
-    local protocol = luci.http.formvalue("protocol")
-
-    -- Validate the required fields
-    if not ssid or not interface or not ip or not port or not username or not password or not protocol then
-        luci.http.redirect(luci.dispatcher.build_url("admin", "services", "proxy"))
-        return
-    end
-
-    luci.http.redirect(luci.dispatcher.build_url("admin", "services", "proxy"))
-
-    if interface ~= "lan" then
-        luci.http.redirect(luci.dispatcher.build_url("admin", "services", "proxy"))
-        create_ssid(interface, ssid, key)
-        create_firewall_zone(ssid, ssid, "ACCEPT", "ACCEPT", "ACCEPT")
-        os.execute("sleep 3")
-        local device = find_virtual_interface(ssid)
-        create_interface(ssid, "192.168." .. count_proxys()+2 .. ".1", device)
-    else
-        create_vlan()
-    end
-
-    -- -- Generate a unique name (you can use a better logic to generate it)
-    -- local unique_name = os.time()
-
-    -- -- Save the proxy configuration to UCI
-    local proxy_section = {
-        name = ssid,
-        interface = interface,
-        ip = ip,
-        port = port,
-        local_port = 1080 + count_proxys,
-        local_ip = "192.168." .. count_proxys()+2 .. ".1",
-        username = username,
-        password = password,
-        protocol = protocol,
-    }
-
-    uci:section("proxy", "proxy", unique_name, proxy_section)
-    uci:commit("proxy")
-    uci:save("proxy")
-    os.execute("/etc/init.d/proxy restart")
-
-end
-
 function find_virtual_interface(ssid)
     local handle = io.popen("iwinfo | grep " .. ssid .. " | awk -F ' ' '{print $1}'")
     local virtualInterface = handle:read("*a")
@@ -176,4 +124,53 @@ function count_proxys()
     return math.floor(num)
 end
 
+function save_proxy()
+    local ssid = luci.http.formvalue("ssid")
+    local key = luci.http.formvalue("key")
+    local interface = luci.http.formvalue("interface")
+    local ip = luci.http.formvalue("ip")
+    local port = luci.http.formvalue("port")
+    local username = luci.http.formvalue("username")
+    local password = luci.http.formvalue("password")
+    local protocol = luci.http.formvalue("protocol")
 
+    -- Validate the required fields
+    if not ssid or not interface or not ip or not port or not username or not password or not protocol then
+        luci.http.redirect(luci.dispatcher.build_url("admin", "services", "proxy"))
+        return
+    end
+
+    -- Redirect to proxy page
+    luci.http.redirect(luci.dispatcher.build_url("admin", "services", "proxy"))
+
+    if interface ~= "lan" then
+        create_ssid(interface, ssid, key)
+        create_firewall_zone(ssid, ssid, "ACCEPT", "ACCEPT", "ACCEPT")
+        os.execute("sleep 3")
+        local device = find_virtual_interface(ssid)
+        create_interface(ssid, "192.168." .. count_proxys()+2 .. ".1", device)
+    else
+        create_vlan()
+    end
+
+    -- Generate a unique name (you can use a better logic to generate it)
+    local unique_name = os.time()
+
+    -- Save the proxy configuration to UCI
+    local proxy_section = {
+        name = ssid,
+        interface = interface,
+        ip = ip,
+        port = port,
+        local_port = 1080 + count_proxys(),
+        local_ip = "192.168." .. count_proxys()+2 .. ".1",
+        username = username,
+        password = password,
+        protocol = protocol,
+    }
+
+    uci:section("proxy", "proxy", unique_name, proxy_section)
+    uci:commit("proxy")
+    uci:save("proxy")
+    os.execute("/etc/init.d/proxy restart")
+end
