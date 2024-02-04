@@ -1,0 +1,33 @@
+msgid "Overseas live broadcast acceleration"
+msgstr "海外直播加速"
+
+msgid "One account corresponds to one IP, and the goods are sold globally."
+msgstr "一个账号对应一个IP，商品全球销售有保障。"
+
+msgid "ssid"
+msgstr "wifi名称"
+
+msgid "state"
+msgstr "状态"
+
+msgid "interface"
+msgstr "接口"
+
+msgid "Restart node"
+msgstr "重启节点"
+
+msgid "Stop node"
+msgstr "停止节点"
+
+msgid "Edit node"
+msgstr "编辑节点"
+
+msgid "Delete node"
+msgstr "删除节点"
+
+
+
+
+
+
+
