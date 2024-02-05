@@ -7,6 +7,9 @@ msgstr "一个账号对应一个IP，商品全球销售有保障。"
 msgid "ssid"
 msgstr "wifi名称"
 
+msgid "IP address"
+msgstr "IP地址"
+
 msgid "state"
 msgstr "状态"
 
@@ -30,12 +33,3 @@ msgstr "暂无节点。"
 
 msgid "New node"
 msgstr "添加节点"
-
-
-
-
-
-
-
-
-
