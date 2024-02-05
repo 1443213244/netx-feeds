@@ -30,16 +30,16 @@
 <% uci:foreach("proxy", "proxy", function(config) %>
   <div class="item">
     <div class="info">
-      <h4><%= _('ssid') %>: <%= config.name %></h4>
-      <p><%= _('IP address') %>: <%= config.ip %></p>
-      <p><%= _('state') %>: <%= _('Running') %></p>
-      <p><%= _('interface') %>: <%= config.interface %></p>
+      <h4><%: ssid %>: <%= config.name %></h4>
+      <p><%: IP address %>: <%= config.ip %></p>
+      <p><%: state %>: <%= _('Running') %></p>
+      <p><%: interface %>: <%= config.interface %></p>
     </div>
 
     <div class="buttons">
-      <button><%= _('Restart node') %></button>
-      <button><%= _('Stop node') %></button>
-      <button><%= _('Edit node') %></button>
+      <button><%: Restart node %></button>
+      <button><%: Stop node %></button>
+      <button><%: Edit node %></button>
     </div>
   </div>
   <% has_proxy_config = true %>
@@ -51,5 +51,5 @@
   </div>
 <% end %>
 
-<button onclick="redirectToNewPage()"><%= _('New node') %></button>
+<button onclick="redirectToNewPage()"><%: New node %></button>
 <%+footer%>
