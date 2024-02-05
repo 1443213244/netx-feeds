@@ -5,8 +5,8 @@ local http = require("luci.http")
 
 function index()
     entry({"admin", "services", "proxy_status"}, template("proxy/proxy_status"), translate("Overseas live broadcast acceleration"), 100)
-    entry({"admin", "services", "proxy"}, template("proxy/proxy")).leaf = true
-    entry({"admin", "services", "proxy", "save_proxy"}, call("save_proxy")).leaf = true
+    entry({"admin", "services", "proxy"}, template("proxy/proxy"))
+    entry({"admin", "services", "proxy", "save_proxy"}, call("save_proxy"))
 end
 
 function create_interface(name, ip, device)
@@ -86,13 +86,11 @@ function find_virtual_interface(ssid)
 end
 
 function create_firewall_zone(zone_name, network, input, output, forward)
-    -- Check if the zone already exists, if it does, return
     if uci:get("firewall", zone_name) then
         print("Firewall zone '" .. zone_name .. "' already exists.")
         return
     end
 
-    -- Create the firewall zone
     uci:section("firewall", "zone", zone_name, {
         name = zone_name,
         network = network,
@@ -106,14 +104,13 @@ function create_firewall_zone(zone_name, network, input, output, forward)
         dest = "wan",
     })
 
-    -- Commit and save the changes
     uci:commit("firewall")
     uci:save("firewall")
 
     print("Firewall zone '" .. zone_name .. "' created successfully.")
 end
 
-function count_proxys()
+function count_proxies()
     local handle = io.popen("uci show proxy | grep -oE '^proxy\\.@proxy\\[[0-9]+\\]' | sort -u | wc -l")
     local num_str = handle:read("*a")
     handle:close()
@@ -139,17 +136,15 @@ function save_proxy()
         return
     end
 
-    -- Generate a unique name (you can use a better logic to generate it)
     local unique_name = os.time()
 
-    -- Save the proxy configuration to UCI
     local proxy_section = {
         name = ssid,
         interface = interface,
         ip = ip,
         port = port,
-        local_port = 1080 + count_proxys(),
-        local_ip = "192.168." .. count_proxys()+2 .. ".1",
+        local_port = 1080 + count_proxies(),
+        local_ip = "192.168." .. count_proxies() + 2 .. ".1",
         username = username,
         password = password,
         protocol = protocol,
@@ -158,8 +153,6 @@ function save_proxy()
     uci:section("proxy", "proxy", unique_name, proxy_section)
     uci:commit("proxy")
     uci:save("proxy")
-
-    -- Redirect to proxy page
     luci.http.redirect(luci.dispatcher.build_url("admin", "services", "proxy_status"))
 
     if interface ~= "lan" then
@@ -167,7 +160,7 @@ function save_proxy()
         create_firewall_zone(ssid, ssid, "ACCEPT", "ACCEPT", "ACCEPT")
         os.execute("sleep 3")
         local device = find_virtual_interface(ssid)
-        create_interface(ssid, "192.168." .. count_proxys()+2 .. ".1", device)
+        create_interface(ssid, "192.168." .. count_proxies() + 2 .. ".1", device)
     else
         create_vlan()
     end
