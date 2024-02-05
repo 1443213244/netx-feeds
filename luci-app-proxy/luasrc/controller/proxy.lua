@@ -160,7 +160,7 @@ function save_proxy()
         create_firewall_zone(ssid, ssid, "ACCEPT", "ACCEPT", "ACCEPT")
         os.execute("sleep 3")
         local device = find_virtual_interface(ssid)
-        create_interface(ssid, "192.168." .. count_proxies() + 2 .. ".1", device)
+        create_interface(ssid, "192.168." .. count_proxies() + 1 .. ".1", device)
     else
         create_vlan()
     end
