@@ -136,8 +136,6 @@ function save_proxy()
         return
     end
 
-    local unique_name = os.time()
-
     local proxy_section = {
         name = ssid,
         interface = interface,
@@ -150,7 +148,7 @@ function save_proxy()
         protocol = protocol,
     }
 
-    uci:section("proxy", "proxy", unique_name, proxy_section)
+    uci:section("proxy", "proxy", ssid, proxy_section)
     uci:commit("proxy")
     uci:save("proxy")
     luci.http.redirect(luci.dispatcher.build_url("admin", "services", "proxy_status"))
