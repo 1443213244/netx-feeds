@@ -111,7 +111,7 @@ function create_firewall_zone(zone_name, network, input, output, forward)
 end
 
 function count_proxies()
-    local handle = io.popen("uci show proxy | grep -oE '^proxy\\.@proxy\\[[0-9]+\\]' | sort -u | wc -l")
+    local handle = io.popen("uci show proxy | grep -oE 'proxy\\.[^=]+' | cut -d'.' -f2 | sort -u | wc -l")
     local num_str = handle:read("*a")
     handle:close()
 

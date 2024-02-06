@@ -2,24 +2,24 @@
 
 generate_proxy_config() {
     PROXY_CONFIG_FILE="/tmp/proxy.yaml"
-    proxy=$(uci show proxy | grep -oE '^proxy\.@proxy\[[0-9]+\]' | sort -u | wc -l)
+    proxy_names=$(uci show proxy | grep -oE 'proxy\.[^=]+' | cut -d'.' -f2 | sort -u)
 
     # 清空已有的配置文件
     echo "services:" > "$PROXY_CONFIG_FILE"
 
     # 写 services
-    for i in $(seq 0 $((proxy - 1))); do
-        port=$(uci get proxy.@proxy[$i].port)
-        ip=$(uci get proxy.@proxy[$i].ip)
-        local_port=$(uci get proxy.@proxy[$i].local_port)
-        username=$(uci get proxy.@proxy[$i].username)
-        password=$(uci get proxy.@proxy[$i].password)
+    for name in $proxy_names; do
+        port=$(uci get proxy.$name.port)
+        ip=$(uci get proxy.$name.ip)
+        local_port=$(uci get proxy.$name.local_port)
+        username=$(uci get proxy.$name.username)
+        password=$(uci get proxy.$name.password)
 
-        echo "- name: service-$i" >> "$PROXY_CONFIG_FILE"
+        echo "- name: $name" >> "$PROXY_CONFIG_FILE"
         echo "  addr: :$local_port" >> "$PROXY_CONFIG_FILE"
         echo "  handler:" >> "$PROXY_CONFIG_FILE"
         echo "    type: red" >> "$PROXY_CONFIG_FILE"
-        echo "    chain: chain-$i" >> "$PROXY_CONFIG_FILE"
+        echo "    chain: chain-$name" >> "$PROXY_CONFIG_FILE"
         echo "    metadata:" >> "$PROXY_CONFIG_FILE"
         echo "      sniffing: true" >> "$PROXY_CONFIG_FILE"
         echo "      tproxy: true" >> "$PROXY_CONFIG_FILE"
@@ -31,13 +31,13 @@ generate_proxy_config() {
 
     echo "chains:" >> "$PROXY_CONFIG_FILE"
     # 写 chains
-    for i in $(seq 0 $((proxy - 1))); do
-        port=$(uci get proxy.@proxy[$i].port)
-        ip=$(uci get proxy.@proxy[$i].ip)
-        username=$(uci get proxy.@proxy[$i].username)
-        password=$(uci get proxy.@proxy[$i].password)
+    for name in $proxy_names; do
+        port=$(uci get proxy.$name.port)
+        ip=$(uci get proxy.$name.ip)
+        username=$(uci get proxy.$name.username)
+        password=$(uci get proxy.$name.password)
 
-        echo "- name: chain-$i" >> "$PROXY_CONFIG_FILE"
+        echo "- name: chain-$name" >> "$PROXY_CONFIG_FILE"
         echo "  hops:" >> "$PROXY_CONFIG_FILE"
         echo "    - name: hop-0" >> "$PROXY_CONFIG_FILE"
         echo "      sockopts:" >> "$PROXY_CONFIG_FILE"
