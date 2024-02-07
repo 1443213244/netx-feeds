@@ -131,11 +131,17 @@ function save_proxy()
     local username = luci.http.formvalue("username")
     local password = luci.http.formvalue("password")
     local protocol = luci.http.formvalue("protocol")
+    local local_port = luci.http.formvalue("local_port")
+    local local_ip = luci.http.formvalue("local_ip")
 
-    -- Validate the required fields
     if not ssid or not interface or not ip or not port or not username or not password or not protocol then
         luci.http.redirect(luci.dispatcher.build_url("admin", "services", "proxy_status"))
         return
+    end
+
+    if not local_port or not local_ip then
+        local_port = 1080 + count_proxies()
+        local_ip = "192.168." .. (count_proxies() + 2) .. ".1"
     end
 
     local proxy_section = {
@@ -144,8 +150,8 @@ function save_proxy()
         interface = interface,
         ip = ip,
         port = port,
-        local_port = 1080 + count_proxies(),
-        local_ip = "192.168." .. count_proxies() + 2 .. ".1",
+        local_port = local_port,
+        local_ip = local_ip,
         username = username,
         password = password,
         protocol = protocol,
@@ -157,11 +163,12 @@ function save_proxy()
     luci.http.redirect(luci.dispatcher.build_url("admin", "services", "proxy_status"))
 
     if interface ~= "lan" then
-        local existing_network = uci:get("network", ssid)
-        if existing_network then
+        local existing_interface = uci:get("network", ssid)
+        if existing_interface then
+            -- Interface exists, delete it
             uci:delete("network", ssid)
             uci:delete("dhcp", ssid)
-            uci:commit("network")
+            uci:commit("network")  -- Commit changes before deletion
             uci:commit("dhcp")
             uci:save("network")
             uci:save("dhcp")
@@ -170,6 +177,7 @@ function save_proxy()
 
         local existing_wireless = uci:get("wireless", ssid)
         if existing_wireless then
+            -- Wireless config exists, delete it
             uci:delete("wireless", ssid)
         end
 
@@ -187,13 +195,14 @@ function save_proxy()
         end
 
         local device = find_virtual_interface(ssid)
-        create_interface(ssid, "192.168." .. count_proxies() + 1 .. ".1", device)
+        create_interface(ssid, local_ip, device)
     else
         create_vlan()
     end
 
     os.execute("/etc/init.d/proxy restart")
 end
+
 
 function delete_proxy()
     local query_string = luci.http.getenv("QUERY_STRING") or ""
@@ -243,18 +252,20 @@ function get_proxy_data(ssid)
     local proxy_data = uci:get_all("proxy", ssid)
     
     if not proxy_data then
-        return nil  -- 如果找不到指定SSID的代理数据，返回nil
+        return nil 
     end
 
     return {
         interface = proxy_data.interface,
         ssid =  uci:get("proxy", ssid, "name"),
-        key =  uci:get("proxy", ssid, "password"),
+        key =  uci:get("proxy", ssid, "key"),
         ip =  uci:get("proxy", ssid, "ip"),
+        local_ip = uci:get("proxy", ssid, "local_ip"),
+        local_port = uci:get("proxy", ssid, "local_port"),
         port =  uci:get("proxy", ssid, "port"),
         username =  uci:get("proxy", ssid, "username"),
         password =  uci:get("proxy", ssid, "password"),
-        protocol = uci:get("proxy", ssid, "protocol")  -- 获取协议字段，如果不存在则使用默认值
+        protocol = uci:get("proxy", ssid, "protocol")  
     }
 end
 

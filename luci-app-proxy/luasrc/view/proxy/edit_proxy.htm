@@ -90,6 +90,14 @@
               <h3>代理信息</h3>
             </td>
           </tr>
+          <tr style="display: none;">
+            <td>本地IP:</td>
+            <td><input type="text" name="local_ip" placeholder="IP" value="<%= proxy_data.local_ip or '' %>"></td>
+          </tr>
+          <tr style="display: none;">
+            <td>本地端口:</td>
+            <td><input type="text" name="local_port" placeholder="local_port" value="<%= proxy_data.local_port or '' %>"></td>
+          </tr>
           <tr>
             <td>IP:</td>
             <td><input type="text" name="ip" placeholder="IP" value="<%= proxy_data.ip or '' %>"></td>
