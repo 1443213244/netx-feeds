@@ -40,7 +40,7 @@
   }
 
   input[type="submit"] {
-    background-color: #4CAF50;
+    background-color: var(--primary);
     color: white;
     padding: 10px 15px;
     border: none;
@@ -50,7 +50,7 @@
   }
 
   input[type="submit"]:hover {
-    background-color: #45a049;
+    background-color: var(--primary);
   }
 </style>
 
@@ -59,7 +59,7 @@
   <div id="cbi-map" class="cbi-map">
     <form id="proxy-form" method="post" action="<%= luci.dispatcher.build_url('admin', 'services', 'proxy','save_proxy') %>" onsubmit="return validateForm()">
       <div class="cbi-section">
-        <h2>新增IP</h2>
+        <h2>添加节点</h2>
         <table class="cbi-section-table" style="margin: 0 auto;">
           <tbody>
             <tr>
