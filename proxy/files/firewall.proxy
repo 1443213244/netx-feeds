@@ -3,7 +3,12 @@
 # 启用调试模式
 set -x
 
-add_proxy_rule(){
+replace_last_digit_with_zero() {
+    local_ip=$1
+    echo "${local_ip%.*}.0"
+}
+
+add_proxy_rule() {
     ip rule add fwmark 1 lookup 100
     ip route add local 0.0.0.0/0 dev lo table 100
 
@@ -32,11 +37,12 @@ add_proxy_rule(){
     for name in $proxy_names; do
         local_ip=$(uci get proxy.$name.local_ip)
         local_port=$(uci get proxy.$name.local_port)
-        iptables -t mangle -A PREROUTING -p tcp -s $local_ip -j TPROXY --tproxy-mark 0x1/0x1 --on-ip 127.0.0.1 --on-port $local_port
+        modified_local_ip=$(replace_last_digit_with_zero "$local_ip")
+        iptables -t mangle -A PREROUTING -p tcp -s $modified_local_ip/24 -j TPROXY --tproxy-mark 0x1/0x1 --on-ip 127.0.0.1 --on-port $local_port
     done
 }
 
-remove_proxy_rule(){
+remove_proxy_rule() {
     iptables -t mangle -D OUTPUT -p tcp -j GOST_LOCAL
     iptables -t mangle -F GOST_LOCAL
     iptables -t mangle -X GOST_LOCAL
@@ -55,7 +61,8 @@ remove_proxy_rule(){
     for name in $proxy_names; do
         local_ip=$(uci get proxy.$name.local_ip)
         local_port=$(uci get proxy.$name.local_port)
-        iptables -t mangle -D PREROUTING -p tcp -s $local_ip -j TPROXY --tproxy-mark 0x1/0x1 --on-ip 127.0.0.1 --on-port $local_port
+        modified_local_ip=$(replace_last_digit_with_zero "$local_ip")
+        iptables -t mangle -D PREROUTING -p tcp -s $modified_local_ip/24 -j TPROXY --tproxy-mark 0x1/0x1 --on-ip 127.0.0.1 --on-port $local_port
     done
 }
 

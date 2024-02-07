@@ -7,6 +7,8 @@ function index()
     entry({"admin", "services", "proxy_status"}, template("proxy/proxy_status"), translate("Overseas live broadcast acceleration"), 100)
     entry({"admin", "services", "proxy"}, template("proxy/proxy"))
     entry({"admin", "services", "proxy", "save_proxy"}, call("save_proxy"))
+    entry({"admin", "services", "proxy", "delete_proxy"}, call("delete_proxy"))
+    entry({"admin", "services", "proxy", "edit_proxy"}, call("edit_proxy"))
 end
 
 function create_interface(name, ip, device)
@@ -138,6 +140,7 @@ function save_proxy()
 
     local proxy_section = {
         name = ssid,
+        key = key,
         interface = interface,
         ip = ip,
         port = port,
@@ -154,9 +157,35 @@ function save_proxy()
     luci.http.redirect(luci.dispatcher.build_url("admin", "services", "proxy_status"))
 
     if interface ~= "lan" then
+        local existing_network = uci:get("network", ssid)
+        if existing_network then
+            uci:delete("network", ssid)
+            uci:delete("dhcp", ssid)
+            uci:commit("network")
+            uci:commit("dhcp")
+            uci:save("network")
+            uci:save("dhcp")
+            os.execute("/etc/init.d/network restart")
+        end
+
+        local existing_wireless = uci:get("wireless", ssid)
+        if existing_wireless then
+            uci:delete("wireless", ssid)
+        end
+
         create_ssid(interface, ssid, key)
-        create_firewall_zone(ssid, ssid, "ACCEPT", "ACCEPT", "ACCEPT")
-        os.execute("sleep 3")
+
+        local firewall_config = uci:get("firewall", ssid)
+        if firewall_config then
+            uci:delete("firewall", ssid)
+            uci:delete("firewall", ssid .. "_wan")
+            uci:commit("firewall")
+            uci:save("firewall")
+            create_firewall_zone(ssid, ssid, "ACCEPT", "ACCEPT", "ACCEPT")
+        else
+            create_firewall_zone(ssid, ssid, "ACCEPT", "ACCEPT", "ACCEPT")
+        end
+
         local device = find_virtual_interface(ssid)
         create_interface(ssid, "192.168." .. count_proxies() + 1 .. ".1", device)
     else
@@ -164,4 +193,88 @@ function save_proxy()
     end
 
     os.execute("/etc/init.d/proxy restart")
+end
+
+function delete_proxy()
+    local query_string = luci.http.getenv("QUERY_STRING") or ""
+    local ssid = string.match(query_string, "ssid=([^&=]+)")
+
+    if not ssid then
+        luci.http.redirect(luci.dispatcher.build_url("admin", "services", "proxy_status"))
+        return
+    end
+
+    -- Delete proxy configuration
+    uci:delete("proxy", ssid)
+    uci:commit("proxy")
+    uci:save("proxy")
+
+    luci.http.redirect(luci.dispatcher.build_url("admin", "services", "proxy_status"))
+
+    local wireless_config = uci:get("wireless", ssid)
+    if wireless_config then
+        uci:delete("wireless", ssid)
+        uci:commit("wireless")
+    end
+
+    local firewall_config = uci:get("firewall", ssid)
+    if firewall_config then
+        uci:delete("firewall", ssid)
+        uci:delete("firewall", ssid .. "_wan")
+        uci:commit("firewall")
+        uci:save("firewall")
+    end
+
+    local network_config = uci:get("network", ssid)
+    if network_config then
+        uci:delete("network", ssid)
+        uci:delete("dhcp", ssid)
+        uci:commit("network")
+        uci:commit("dhcp")
+        uci:save("network")
+        uci:save("dhcp")
+        os.execute("/etc/init.d/network restart")
+    end
+
+    os.execute("/etc/init.d/proxy restart")
+end
+
+function get_proxy_data(ssid)
+    local proxy_data = uci:get_all("proxy", ssid)
+    
+    if not proxy_data then
+        return nil  -- 如果找不到指定SSID的代理数据，返回nil
+    end
+
+    return {
+        interface = proxy_data.interface,
+        ssid =  uci:get("proxy", ssid, "name"),
+        key =  uci:get("proxy", ssid, "password"),
+        ip =  uci:get("proxy", ssid, "ip"),
+        port =  uci:get("proxy", ssid, "port"),
+        username =  uci:get("proxy", ssid, "username"),
+        password =  uci:get("proxy", ssid, "password"),
+        protocol = uci:get("proxy", ssid, "protocol")  -- 获取协议字段，如果不存在则使用默认值
+    }
+end
+
+function edit_proxy()
+    local query_string = luci.http.getenv("QUERY_STRING") or ""
+    local ssid = string.match(query_string, "ssid=([^&=]+)")
+
+    if not ssid then
+        luci.http.redirect(luci.dispatcher.build_url("admin", "services", "proxy_status"))
+        return
+    end
+
+    -- 获取指定SSID的代理数据
+    local proxy_data = get_proxy_data(ssid)
+
+    if not proxy_data then
+        luci.http.redirect(luci.dispatcher.build_url("admin", "services", "proxy_status"))
+        return
+    end
+
+    -- 将数据传递给模板
+    luci.template.render("proxy/edit_proxy", { proxy_data = proxy_data })
 end

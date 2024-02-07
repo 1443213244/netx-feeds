@@ -14,6 +14,7 @@
 
   .buttons button {
     background-color: #4CAF50;
+    color: aliceblue;
     margin-left: 10px;
   }
 </style>
@@ -21,6 +22,26 @@
   function redirectToNewPage() {
     var newPageUrl = "/cgi-bin/luci/admin/services/proxy";
     window.location.href = newPageUrl;
+  }
+
+  function deleteNode(ssid) {
+    var deleteUrl = "/cgi-bin/luci/admin/services/proxy/delete_proxy?ssid=" + ssid;
+    
+    fetch(deleteUrl, {
+      method: 'GET',
+    }).then(response => {
+      console.log("Node deleted successfully");
+      // Reload the page or update the UI after deletion
+      location.reload();
+    }).catch(error => {
+      console.error("Error deleting node:", error);
+    });
+  }
+
+  function editNode(ssid) {
+    // Redirect to the edit page with the specified SSID
+    var editUrl = "/cgi-bin/luci/admin/services/proxy/edit_proxy?ssid=" + ssid;
+    window.location.href = editUrl;
   }
 </script>
 <h2 name="content"><%: Overseas live broadcast acceleration %></h2>
@@ -38,9 +59,10 @@
     </div>
 
     <div class="buttons">
-      <button><%: Restart node %></button>
+      <button onclick="deleteNode('<%= config.name %>')"><%: Delete node %></button>
+      <button onclick="editNode('<%= config.name %>')"><%: Edit node %></button>
+      <!-- Add other buttons and their functionalities as needed -->
       <button><%: Stop node %></button>
-      <button><%: Edit node %></button>
     </div>
   </div>
   <% has_proxy_config = true %>

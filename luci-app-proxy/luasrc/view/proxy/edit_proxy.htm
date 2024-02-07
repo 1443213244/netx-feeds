@@ -1,0 +1,169 @@
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    background-color: #f5f5f5;
+  }
+
+  #cbi-map {
+    margin: 20px auto;
+    padding: 20px;
+    background-color: #fff;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    width: 100%;
+  }
+
+  .cbi-section {
+    margin-bottom: 20px;
+  }
+
+  h2 {
+    color: #333;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+  }
+
+  td, th {
+    padding: 8px;
+    text-align: left;
+  }
+
+  select, input[type="text"], input[type="password"] {
+    width: 100%;
+    padding: 8px;
+    margin: 5px 0;
+    box-sizing: border-box;
+  }
+
+  input[type="submit"] {
+    background-color: #4CAF50;
+    color: white;
+    padding: 10px 15px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+  }
+
+  input[type="submit"]:hover {
+    background-color: #45a049;
+  }
+</style>
+
+<%+header%>
+<div id="cbi-map" class="cbi-map">
+  <form id="proxy-form" method="post" action="<%= luci.dispatcher.build_url('admin', 'services', 'proxy','save_proxy') %>" onsubmit="return validateForm()">
+    <div class="cbi-section">
+      <h2>新增IP</h2>
+      <% local proxy_data = proxy_data or {} %>
+      <table class="cbi-section-table" style="margin: 0 auto;">
+        <tbody>
+          <tr>
+            <td>
+              <h3>接口配置</h3>
+            </td>
+          </tr>
+          <tr>
+            <td>绑定接口:</td>
+            <td>
+              <select name="interface" onchange="toggleNameInput(this)">
+                <option value="5G" <% if proxy_data.interface == '5G' then %>selected<% end %>>5G</option>
+                <option value="2.4G" <% if proxy_data.interface == '2.4G' then %>selected<% end %>>2.4G</option>
+                <option value="lan" <% if proxy_data.interface == 'lan' then %>selected<% end %>>lan</option>
+              </select>
+            </td>
+          </tr>
+          <tr id="ssid">
+            <td>WIFI名称:</td>
+            <td><input type="text" name="ssid" placeholder="Name" value="<%= proxy_data.ssid or '' %>"></td>
+          </tr>
+          <tr id="key">
+            <td>WIFI密码:</td>
+            <td><input type="password" name="key" placeholder="Name" value="<%= proxy_data.key or '' %>"></td>
+          </tr>
+          <tr>
+            <td>
+              <h3>代理信息</h3>
+            </td>
+          </tr>
+          <tr>
+            <td>IP:</td>
+            <td><input type="text" name="ip" placeholder="IP" value="<%= proxy_data.ip or '' %>"></td>
+          </tr>
+          <tr>
+            <td>端口:</td>
+            <td><input type="text" name="port" placeholder="Port" value="<%= proxy_data.port or '' %>"></td>
+          </tr>
+          <tr>
+            <td>账号:</td>
+            <td><input type="text" name="username" placeholder="Username" value="<%= proxy_data.username or '' %>"></td>
+          </tr>
+          <tr>
+            <td>密码:</td>
+            <td><input type="text" name="password" placeholder="Password" value="<%= proxy_data.password or '' %>"></td>
+          </tr>
+          <tr>
+            <td>协议:</td>
+            <td>
+              <select name="protocol">
+                <option value="relay+mtls" <% if proxy_data.protocol == 'relay+mtls' then %>selected<% end %>>relay+mtls</option>
+                <option value="http" <% if proxy_data.protocol == 'http' then %>selected<% end %>>HTTP</option>
+                <option value="https" <% if proxy_data.protocol == 'https' then %>selected<% end %>>HTTPS</option>
+              </select>
+            </td>
+          </tr>
+          <tr>
+            <td colspan="2"><input type="submit" value="添加"></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </form>
+</div>
+
+<script>
+  function toggleNameInput(selectElement) {
+    var ssid = document.getElementById("ssid");
+    var key = document.getElementById("key");
+
+    if (selectElement.value === "lan") {
+      ssid.style.display = "none";
+      key.style.display = "none";
+    } else {
+      ssid.style.display = "table-row";
+      key.style.display = "table-row";
+    }
+  }
+
+  function validateForm() {
+    var interfaceValue = document.forms["proxy-form"]["interface"].value;
+    var ssidValue = document.forms["proxy-form"]["ssid"].value;
+    var keyValue = document.forms["proxy-form"]["key"].value;
+    var ipValue = document.forms["proxy-form"]["ip"].value;
+    var portValue = document.forms["proxy-form"]["port"].value;
+    var usernameValue = document.forms["proxy-form"]["username"].value;
+    var passwordValue = document.forms["proxy-form"]["password"].value;
+    var protocolValue = document.forms["proxy-form"]["protocol"].value;
+
+    if (interfaceValue === "lan") {
+      // LAN接口无需SSID和密码
+    } else {
+      if (ssidValue === "" || keyValue === "") {
+        alert("请填写WIFI名称和密码");
+        return false;
+      }
+    }
+
+    if (ipValue === "" || portValue === "" || usernameValue === "" || passwordValue === "" || protocolValue === "") {
+      alert("请填写所有代理信息");
+      return false;
+    }
+
+    return true;
+  }
+</script>
+<%+footer%>
