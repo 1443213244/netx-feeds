@@ -242,10 +242,10 @@ function delete_proxy()
         uci:commit("dhcp")
         uci:save("network")
         uci:save("dhcp")
-        os.execute("/etc/init.d/network restart")
+        luci.sys.call("/etc/init.d/network restart")
     end
 
-    os.execute("/etc/init.d/proxy restart")
+    luci.sys.call("/etc/init.d/proxy restart")
 end
 
 function get_proxy_data(ssid)
