@@ -28,12 +28,23 @@
   }
 </style>
 
-<%+header%>
 <div id="cbi-map" class="cbi-map">
   <div class="cbi-section">
     <h2>请稍等</h2>
-    <div class="loading">正在加载...</div>
+    <div class="loading">添加或修改节点后，会重启网络！</div>
+    <div id="countdown" class="loading">请在60秒后重新连接网络。</div>
   </div>
 </div>
-<%+footer%>
 
+<script>
+  var seconds = 60;
+  var countdown = document.getElementById('countdown');
+  var interval = setInterval(function() {
+    countdown.innerHTML = '请在' + seconds + '秒后重新连接网络。';
+    seconds--;
+    if (seconds < 0) {
+      clearInterval(interval);
+      countdown.innerHTML = '请重新连接网络';
+    }
+  }, 1000);
+</script>
