@@ -11,6 +11,7 @@ function index()
     entry({"admin", "services", "proxy", "save_proxy"}, call("save_proxy"))
     entry({"admin", "services", "proxy", "delete_proxy"}, call("delete_proxy"))
     entry({"admin", "services", "proxy", "edit_proxy"}, call("edit_proxy"))
+    entry({"admin", "services", "proxy", "restart"}, call("restart_proxy"))
 end
 
 function create_interface(name, ip, device)
@@ -122,6 +123,11 @@ function count_proxies()
     local num = tonumber(num_str)
 
     return math.floor(num)
+end
+
+function restart_proxy()
+    os.execute("/etc/init.d/network restart")
+    os.execute("/etc/init.d/proxy restart")
 end
 
 function save_proxy()
