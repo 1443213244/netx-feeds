@@ -22,7 +22,7 @@ sleep 1
 TEST_URL="http://httpbin.org/ip"  # 替换成你要测试的网站
 
 # 使用 curl 测试代理
-if curl -x socks5://127.0.0.1:1080 $TEST_URL >/dev/null 2>&1; then
+if curl -x socks5://127.0.0.1:1080 -m 10 $TEST_URL >/dev/null 2>&1; then
     echo "true"
 else
     echo "false"

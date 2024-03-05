@@ -7,6 +7,7 @@ function index()
     entry({"admin", "services", "proxy_status"}, template("proxy/proxy_status"), translate("Overseas live broadcast acceleration"), 100)
     entry({"admin", "services", "proxy"}, template("proxy/proxy"))
     entry({"admin", "services", "proxy", "wait"}, template("proxy/wait"))
+    entry({"admin", "services", "proxy", "error"}, template("proxy/proxy_err"))
     entry({"admin", "services", "proxy", "save_proxy"}, call("save_proxy"))
     entry({"admin", "services", "proxy", "delete_proxy"}, call("delete_proxy"))
     entry({"admin", "services", "proxy", "edit_proxy"}, call("edit_proxy"))
@@ -138,6 +139,16 @@ function save_proxy()
     if not ssid or not interface or not ip or not port or not username or not password or not protocol then
         luci.http.redirect(luci.dispatcher.build_url("admin", "services", "proxy_status"))
         return
+    end
+
+    local test_script_path = "/usr/bin/proxy-test"
+    local test_command = string.format("%s %s %s %s %s", test_script_path, username, password, port, ip)
+    local handle = io.popen(test_command)
+    local test_result = handle:read("*a")
+    handle:close()
+
+    if string.match(test_result, "false") then
+        luci.http.redirect(luci.dispatcher.build_url("admin", "services", "proxy", "error"))
     end
 
     if not local_port or not local_ip then
