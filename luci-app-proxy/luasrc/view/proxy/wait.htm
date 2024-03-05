@@ -27,7 +27,7 @@
     color: #999;
   }
 </style>
-
+<%+header%>
 <div id="cbi-map" class="cbi-map">
   <div class="cbi-section">
     <h2>请稍等</h2>
@@ -35,7 +35,7 @@
     <div id="countdown" class="loading">请在60秒后重新连接网络。</div>
   </div>
 </div>
-
+<%+footer%>
 <script>
   var seconds = 60;
   var countdown = document.getElementById('countdown');
@@ -45,6 +45,9 @@
     if (seconds < 0) {
       clearInterval(interval);
       countdown.innerHTML = '请重新连接网络';
+      setTimeout(function() {
+        window.location.href = '/cgi-bin/luci/admin/services/proxy_status';
+      }, 1000); // 1000毫秒 = 1秒
     }
   }, 1000);
 </script>
