@@ -72,8 +72,8 @@
             <td>
               <select name="interface" onchange="toggleNameInput(this)">
                 <option value="5G" <% if proxy_data.interface == '5G' then %>selected<% end %>>5G</option>
-                <option value="2.4G" <% if proxy_data.interface == '2.4G' then %>selected<% end %>>2.4G</option>
-                <option value="lan" <% if proxy_data.interface == 'lan' then %>selected<% end %>>lan</option>
+                <!-- <option value="2.4G" <% if proxy_data.interface == '2.4G' then %>selected<% end %>>2.4G</option> -->
+                <!-- <option value="lan" <% if proxy_data.interface == 'lan' then %>selected<% end %>>lan</option> -->
               </select>
             </td>
           </tr>
@@ -119,8 +119,8 @@
             <td>
               <select name="protocol">
                 <option value="relay+mtls" <% if proxy_data.protocol == 'relay+mtls' then %>selected<% end %>>relay+mtls</option>
-                <option value="http" <% if proxy_data.protocol == 'http' then %>selected<% end %>>HTTP</option>
-                <option value="https" <% if proxy_data.protocol == 'https' then %>selected<% end %>>HTTPS</option>
+                <!-- <option value="http" <% if proxy_data.protocol == 'http' then %>selected<% end %>>HTTP</option> -->
+                <!-- <option value="https" <% if proxy_data.protocol == 'https' then %>selected<% end %>>HTTPS</option> -->
               </select>
             </td>
           </tr>

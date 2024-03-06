@@ -24,6 +24,19 @@
     window.location.href = newPageUrl;
   }
 
+  function restart() {
+    var restartUrl = "/cgi-bin/luci/admin/services/proxy/restart";  // Adjust the URL accordingly
+
+    fetch(restartUrl, {
+        method: 'GET',
+    }).then(response => {
+        console.log("Service restarted successfully");
+    }).catch(error => {
+        console.error("Error restarting service:", error);
+    });
+  }
+
+
   function deleteNode(ssid) {
     var deleteUrl = "/cgi-bin/luci/admin/services/proxy/delete_proxy?ssid=" + ssid;
     
@@ -62,7 +75,7 @@
       <button onclick="deleteNode('<%= config.name %>')"><%: Delete node %></button>
       <button onclick="editNode('<%= config.name %>')"><%: Edit node %></button>
       <!-- Add other buttons and their functionalities as needed -->
-      <button><%: Stop node %></button>
+      <button onclick="restart()"><%: Restart node %></button>
     </div>
   </div>
   <% has_proxy_config = true %>
