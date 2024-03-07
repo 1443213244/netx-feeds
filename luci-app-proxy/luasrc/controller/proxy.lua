@@ -61,6 +61,10 @@ function create_ssid(interface, ssid, key)
         ssid = ssid,
         encryption = "psk2",
         key = key,
+        isolate = '1',
+        mumimo_dl = '1',
+        mumimo_ul = '1',
+        uapsd = '0',
     }
 
     uci:section("wireless", "wifi-iface", ssid, wifi_section)
@@ -155,6 +159,7 @@ function save_proxy()
 
     if string.match(test_result, "false") then
         luci.http.redirect(luci.dispatcher.build_url("admin", "services", "proxy", "error"))
+        return 
     end
 
     if not local_port or not local_ip then

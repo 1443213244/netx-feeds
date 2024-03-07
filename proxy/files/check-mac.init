@@ -1,0 +1,10 @@
+#!/bin/sh /etc/rc.common
+
+START=98
+STOP=01
+
+CHECK_MAC="/usr/bin/check-mac"
+
+start() {
+    lua $CHECK_MAC  # 调用检测 MAC 地址的脚本
+}

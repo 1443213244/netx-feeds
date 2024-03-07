@@ -17,6 +17,33 @@
     color: aliceblue;
     margin-left: 10px;
   }
+
+  /* 自定义模态框样式 */
+  .modal {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1;
+    width: 380px;
+    padding: 20px;
+    background-color: #fff;
+    color: #f11f1f;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  .modal-content {
+    text-align: center;
+  }
+
+  .modal-btns {
+    margin-top: 10px;
+  }
+
+  .modal-btns button {
+    margin: 0 5px;
+  }
 </style>
 <script>
   function redirectToNewPage() {
@@ -25,38 +52,67 @@
   }
 
   function restart() {
-    var restartUrl = "/cgi-bin/luci/admin/services/proxy/restart";  // Adjust the URL accordingly
+    var restartUrl = "/cgi-bin/luci/admin/services/proxy/restart";  // 根据实际情况调整URL
 
     fetch(restartUrl, {
         method: 'GET',
     }).then(response => {
-        console.log("Service restarted successfully");
+        console.log("服务重启成功");
     }).catch(error => {
-        console.error("Error restarting service:", error);
+        console.error("重启服务时发生错误:", error);
     });
   }
 
-
   function deleteNode(ssid) {
-    var deleteUrl = "/cgi-bin/luci/admin/services/proxy/delete_proxy?ssid=" + ssid;
-    
-    fetch(deleteUrl, {
-      method: 'GET',
-    }).then(response => {
-      console.log("Node deleted successfully");
-      // Reload the page or update the UI after deletion
-      location.reload();
-    }).catch(error => {
-      console.error("Error deleting node:", error);
-    });
+    // 显示自定义模态框
+    var modal = document.getElementById("confirmationModal");
+    modal.style.display = "block";
+
+    // 更新模态框内容
+    document.getElementById("modalText").innerHTML = "删除节点会导致路由器网络重启，已连接的所有设备会和路由器断开连接，确认删除该节点吗？";
+    document.getElementById("confirmBtn").onclick = function() {
+      // 处理删除逻辑
+      var deleteUrl = "/cgi-bin/luci/admin/services/proxy/delete_proxy?ssid=" + ssid;
+
+      fetch(deleteUrl, {
+        method: 'GET',
+      }).then(response => {
+        console.log("节点删除成功");
+        // 删除后重新加载页面或更新UI
+        location.reload();
+      }).catch(error => {
+        console.error("删除节点时发生错误:", error);
+      });
+
+      // 确认后关闭模态框
+      modal.style.display = "none";
+    };
+
+    // 取消按钮点击时关闭模态框
+    document.getElementById("cancelBtn").onclick = function() {
+      modal.style.display = "none";
+    };
   }
 
   function editNode(ssid) {
-    // Redirect to the edit page with the specified SSID
+    // 跳转到带有指定SSID的编辑页面
     var editUrl = "/cgi-bin/luci/admin/services/proxy/edit_proxy?ssid=" + ssid;
     window.location.href = editUrl;
   }
 </script>
+
+<!-- 自定义模态框的HTML代码 -->
+<div id="confirmationModal" class="modal">
+  <div class="modal-content">
+    <p id="modalText"></p>
+    <div class="modal-btns">
+      <button id="confirmBtn">确认</button>
+      <button id="cancelBtn">取消</button>
+    </div>
+  </div>
+</div>
+
+<!-- 其他HTML代码... -->
 <h2 name="content"><%: Overseas live broadcast acceleration %></h2>
 <div class="cbi-map-descr"><%: One account corresponds to one IP, and the goods are sold globally. %></div>
 

@@ -43,6 +43,7 @@ define Package/$(PKG_NAME)/install
 	
 	$(INSTALL_DIR) $(1)/etc/init.d
 	$(INSTALL_BIN) ./files/proxy.init $(1)/etc/init.d/proxy
+	$(INSTALL_BIN) ./files/check-mac.init $(1)/etc/init.d/check-mac
 endef
 
 $(eval $(call BuildPackage,$(PKG_NAME)))
