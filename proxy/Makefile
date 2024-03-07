@@ -36,6 +36,7 @@ define Package/$(PKG_NAME)/install
 	$(INSTALL_BIN) ./files/firewall.proxy $(1)/usr/bin/firewall.proxy
 	$(INSTALL_BIN) ./files/proxy-config-script.sh $(1)/usr/bin/proxy-config-script
 	$(INSTALL_BIN) ./files/proxy-test.sh $(1)/usr/bin/proxy-test
+	$(INSTALL_BIN) ./files/check-mac.lua $(1)/usr/bin/check-mac
 	
 	$(INSTALL_DIR) $(1)/etc/config
 	$(INSTALL_CONF) ./files/proxy.conf $(1)/etc/config/proxy
