@@ -1,10 +1,13 @@
 #!/bin/sh /etc/rc.common
 
-START=98
+START=99
 STOP=01
 
 CHECK_MAC="/usr/bin/check-mac"
 
 start() {
+    sleep 30
+    /etc/init.d/proxy stop
     lua $CHECK_MAC  # 调用检测 MAC 地址的脚本
-}
+    /etc/init.d/proxy restart
+}   
