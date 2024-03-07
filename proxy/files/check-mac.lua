@@ -8,7 +8,7 @@ local function reboot()
     os.execute("reboot")
 end
 
-sleep(30)
+-- sleep(30)
 
 local ifconfig = io.popen("/sbin/ifconfig rax0")
 local mac_address = ifconfig:read("*all"):match("([0-9a-fA-F]+:[0-9a-fA-F]+:[0-9a-fA-F]+:[0-9a-fA-F]+:[0-9a-fA-F]+:[0-9a-fA-F]+)")
