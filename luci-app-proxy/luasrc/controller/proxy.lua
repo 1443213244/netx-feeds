@@ -61,7 +61,7 @@ function create_ssid(interface, ssid, key)
         ssid = ssid,
         encryption = "psk2",
         key = key,
-        isolate = '1',
+        -- isolate = '1',
         mumimo_dl = '1',
         mumimo_ul = '1',
         uapsd = '0',
